@@ -1,0 +1,18 @@
+# GitHub Pages の設定。
+#
+# 本体のリポジトリ(urilog)は非公開のため、そちらではPagesを使えない
+# (無料プランではPagesはパブリックリポジトリ限定)。本体を公開すると
+# ショップ一覧・スクレイパーの実装・相場の集計ロジックまで読まれてしまうため、
+# 公開して問題のない文書だけをこのリポジトリに分けている。
+#
+# 公開URL:
+#   トップ(サポート)      https://gool1618-design.github.io/urilog-docs/
+#   プライバシーポリシー    https://gool1618-design.github.io/urilog-docs/privacy-policy.html
+#   利用規約               https://gool1618-design.github.io/urilog-docs/terms.html
+#
+# 有効化: Settings → Pages → Source を「Deploy from a branch」、
+#         ブランチを main、フォルダを / (root) にする。
+title: ウリログ
+description: 古着せどりのための在庫・売上記録アプリ
+theme: jekyll-theme-minimal
+lang: ja
