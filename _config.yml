@@ -12,11 +12,11 @@
 #   VINFIT プライバシー     https://gool1618-design.github.io/urilog-docs/vinfit-privacy.html
 #
 # ⚠️ **VINFIT の文書もここに置いている。** 本体(FITTAGE)も非公開で、
-# プロンプト・校正データが入っているため Pages を張れない。事情はウリログと同じ。
+# プロンプト・校正データが入っているため Pages を張れない。事情はバイヤーノート(旧ウリログ)と同じ。
 #
 # 有効化: Settings → Pages → Source を「Deploy from a branch」、
 #         ブランチを main、フォルダを / (root) にする。
-title: ウリログ
-description: 古着せどりのための在庫・売上記録アプリ
+title: バイヤーノート
+description: 古着の相場検索と在庫・売上管理アプリ
 theme: jekyll-theme-minimal
 lang: ja
