@@ -6,8 +6,14 @@ title: ウリログ サポート
 
 古着せどりのための、在庫と売上の記録アプリ。
 
+### ウリログ
+
 - [プライバシーポリシー](privacy-policy.md)
 - [利用規約](terms.md)
+
+### VINFIT
+
+- [プライバシーポリシー](vinfit-privacy.md)
 
 ---
 

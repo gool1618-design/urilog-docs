@@ -9,6 +9,10 @@
 #   トップ(サポート)      https://gool1618-design.github.io/urilog-docs/
 #   プライバシーポリシー    https://gool1618-design.github.io/urilog-docs/privacy-policy.html
 #   利用規約               https://gool1618-design.github.io/urilog-docs/terms.html
+#   VINFIT プライバシー     https://gool1618-design.github.io/urilog-docs/vinfit-privacy.html
+#
+# ⚠️ **VINFIT の文書もここに置いている。** 本体(FITTAGE)も非公開で、
+# プロンプト・校正データが入っているため Pages を張れない。事情はウリログと同じ。
 #
 # 有効化: Settings → Pages → Source を「Deploy from a branch」、
 #         ブランチを main、フォルダを / (root) にする。
