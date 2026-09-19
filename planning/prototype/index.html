@@ -1,0 +1,402 @@
+<title>今日はこれ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F1F3EE; --card:#FFFFFF; --ink:#1B2530; --muted:#66707A; --line:#D9DED8;
+  --accent:#2F4F86; --accent-ink:#FFFFFF; --hi:#F2C14E; --hi-ink:#2A2000;
+  --soft:#E6EBF3; --danger:#B4473F; --shadow:0 6px 24px rgba(27,37,48,.08);
+  --tile1:#DCE6F5; --tile2:#F5E6D6; --tile3:#F7DCDC; --tile4:#DDEFE0;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12171E; --card:#1B222B; --ink:#EEF2F6; --muted:#98A3AF; --line:#2B343F;
+  --accent:#8AAEE6; --accent-ink:#0E1620; --hi:#F2C14E; --hi-ink:#2A2000;
+  --soft:#232C37; --danger:#E07B73; --shadow:0 6px 24px rgba(0,0,0,.35);
+  --tile1:#243248; --tile2:#3E3226; --tile3:#432A2C; --tile4:#233A2B;
+}}
+:root[data-theme="dark"]{
+  --bg:#12171E; --card:#1B222B; --ink:#EEF2F6; --muted:#98A3AF; --line:#2B343F;
+  --accent:#8AAEE6; --accent-ink:#0E1620; --hi:#F2C14E; --hi-ink:#2A2000;
+  --soft:#232C37; --danger:#E07B73; --shadow:0 6px 24px rgba(0,0,0,.35);
+  --tile1:#243248; --tile2:#3E3226; --tile3:#432A2C; --tile4:#233A2B;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",-apple-system,"Hiragino Sans",sans-serif;font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+h1,h2,h3,.disp{font-family:"Zen Maru Gothic","Noto Sans JP","Hiragino Maru Gothic ProN",sans-serif;text-wrap:balance;margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:0 16px;padding-block:8px calc(16px + env(safe-area-inset-bottom,0px))}
+.screen{display:flex;flex-direction:column;flex:1;gap:16px}
+.top{display:flex;align-items:center;justify-content:space-between;min-height:44px;color:var(--muted);font-size:13px}
+.top button{color:var(--accent);font-weight:500;padding:8px 0}
+.top .back::before{content:"‹ ";font-size:18px}
+.grow{flex:1}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+h1{font-size:26px;font-weight:700;line-height:1.3}
+h2{font-size:20px;font-weight:700}
+.sub{color:var(--muted);font-size:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border-radius:16px;font-weight:700;font-size:17px;padding:0 20px;transition:transform .12s}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.big{min-height:68px;font-size:19px}
+.btn.secondary{background:var(--soft);color:var(--ink);min-height:48px;font-size:15px;font-weight:500}
+.btn.ghost{color:var(--accent);min-height:44px;font-size:15px;font-weight:500}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{white-space:nowrap;border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:500;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.static{border-style:dashed;color:var(--ink)}
+.chip.ing{padding:8px 12px;display:inline-flex;gap:6px;align-items:center}
+.chip.ing.on{background:var(--hi);border-color:var(--hi);color:var(--hi-ink)}
+.card{background:var(--card);border-radius:20px;border:1px solid var(--line);overflow:hidden;box-shadow:var(--shadow)}
+.tile{aspect-ratio:4/3;max-width:100%;display:flex;align-items:center;justify-content:center;font-size:64px;position:relative}
+.tile small{position:absolute;right:12px;bottom:10px;font-size:11px;color:var(--muted);letter-spacing:.06em}
+.tile.c-japanese{background:var(--tile1)} .tile.c-western{background:var(--tile2)} .tile.c-chinese{background:var(--tile3)} .tile.c-ethnic{background:var(--tile4)}
+.cbody{padding:12px 16px 14px;display:flex;flex-direction:column;gap:4px}
+.cname{font-size:20px;font-weight:700}
+.meta{display:flex;gap:12px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.duel{display:flex;flex-direction:column;gap:6px;flex:1}
+.duel .card{flex:1;display:flex;flex-direction:column;text-align:left;width:100%;transition:transform .2s,box-shadow .2s}
+.duel .card .tile{flex:1;aspect-ratio:auto;min-height:120px}
+.duel .card.win{transform:scale(1.02);box-shadow:0 0 0 3px var(--hi),var(--shadow)}
+.duel .card.lose{opacity:.45;transform:scale(.97)}
+.vs{text-align:center;color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.2em}
+.note{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--ink)}
+.hero{position:relative}
+.hero .tile{font-size:96px}
+.decided-name{font-size:28px;font-weight:700}
+.section{display:flex;flex-direction:column;gap:8px}
+.list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.list .item{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.item .n{flex:1}
+.item .d{color:var(--muted);font-size:12px}
+.check{width:24px;height:24px;border-radius:8px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px}
+.check.on{background:var(--hi);border-color:var(--hi);color:var(--hi-ink)}
+.week{display:flex;flex-direction:column;gap:8px}
+.day{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.day .em{font-size:28px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px}
+.day .w{font-weight:700;width:2.2em;color:var(--muted);font-variant-numeric:tabular-nums}
+.day .nm{flex:1;font-weight:500}
+.day .nm small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.day button{color:var(--accent);font-size:13px;font-weight:500;padding:6px 8px;border-radius:8px;background:var(--soft)}
+.home-card{display:flex;gap:12px;align-items:center;text-align:left;width:100%}
+.home-card .em{font-size:36px;width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--muted)}
+.roulette{height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+.roulette .em{font-size:72px}
+.roulette .nm{font-size:22px;font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:999px;background:var(--hi);color:var(--hi-ink);font-size:12px;font-weight:700;padding:0 6px}
+.proto{font-size:11px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app" id="app"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const DISHES = [{"id":"oyakodon","name":"親子丼","form":"one_dish","cuisine":"japanese","moods":["hearty","warm","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["chicken","egg","soy","wheat"],"season":["all"],"tier":"free","ing":["鶏もも肉","卵","玉ねぎ","ごはん"]},{"id":"butakimchi_don","name":"豚キムチ丼","form":"one_dish","cuisine":"japanese","moods":["hearty","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["pork","soy"],"season":["all"],"tier":"free","ing":["豚こま肉","キムチ","ごはん"]},{"id":"gyudon","name":"牛丼","form":"one_dish","cuisine":"japanese","moods":["hearty","noodle_rice"],"time":20,"effort":1,"cost":2,"tags":["beef","soy"],"season":["all"],"tier":"free","ing":["牛こま肉","玉ねぎ","ごはん"]},{"id":"yaki_udon","name":"焼きうどん","form":"one_dish","cuisine":"japanese","moods":["hearty","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["pork","wheat","soy"],"season":["all"],"tier":"free","ing":["冷凍うどん","豚こま肉","キャベツ"]},{"id":"kamatama_udon","name":"釜玉うどん","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["wheat","egg","soy"],"season":["all"],"tier":"free","ing":["冷凍うどん","卵","ねぎ"]},{"id":"nyumen","name":"にゅうめん","form":"one_dish","cuisine":"japanese","moods":["warm","light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["wheat","soy"],"season":["autumn","winter"],"tier":"free","ing":["そうめん","ねぎ","めんつゆ"]},{"id":"niku_udon","name":"肉うどん","form":"one_dish","cuisine":"japanese","moods":["warm","hearty","noodle_rice"],"time":10,"effort":1,"cost":2,"tags":["beef","wheat","soy"],"season":["all"],"tier":"free","ing":["冷凍うどん","牛こま肉","ねぎ"]},{"id":"kitsune_udon","name":"きつねうどん","form":"one_dish","cuisine":"japanese","moods":["warm","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","soy","tofu"],"season":["all"],"tier":"free","ing":["冷凍うどん","油揚げ","ねぎ"]},{"id":"tori_nanban_soba","name":"鶏南蛮そば","form":"one_dish","cuisine":"japanese","moods":["warm","noodle_rice"],"time":20,"effort":1,"cost":2,"tags":["chicken","buckwheat","soy"],"season":["autumn","winter"],"tier":"pro","ing":["そば","鶏もも肉","長ねぎ"]},{"id":"zaru_soba","name":"ざるそば","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["buckwheat","soy"],"season":["spring","summer"],"tier":"free","ing":["そば","ねぎ","天かす"]},{"id":"napolitan","name":"ナポリタン","form":"one_dish","cuisine":"western","moods":["hearty","noodle_rice"],"time":20,"effort":1,"cost":1,"tags":["wheat","pork"],"season":["all"],"tier":"free","ing":["スパゲッティ","ウインナー","玉ねぎ","ピーマン","ケチャップ"]},{"id":"peperoncino","name":"ペペロンチーノ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat"],"season":["all"],"tier":"free","ing":["スパゲッティ","にんにく","鷹の爪","オリーブオイル"]},{"id":"tarako_pasta","name":"たらこパスタ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["wheat","fish","milk"],"season":["all"],"tier":"pro","ing":["スパゲッティ","たらこ","バター"]},{"id":"meat_sauce_pasta","name":"ミートソースパスタ","form":"one_dish","cuisine":"western","moods":["hearty","noodle_rice"],"time":30,"effort":2,"cost":2,"tags":["wheat","beef","pork"],"season":["all"],"tier":"pro","ing":["スパゲッティ","合いびき肉","玉ねぎ","トマト缶"]},{"id":"carbonara","name":"カルボナーラ","form":"one_dish","cuisine":"western","moods":["hearty","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["wheat","egg","milk","pork"],"season":["all"],"tier":"pro","ing":["スパゲッティ","ベーコン","卵","粉チーズ"]},{"id":"curry_rice","name":"カレーライス","form":"one_dish","cuisine":"western","moods":["hearty","warm","noodle_rice"],"time":40,"effort":2,"cost":2,"tags":["wheat","pork"],"season":["all"],"tier":"free","ing":["豚こま肉","玉ねぎ","じゃがいも","にんじん","カレールー","ごはん"]},{"id":"keema_curry","name":"キーマカレー","form":"one_dish","cuisine":"ethnic","moods":["hearty","warm","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["beef","pork"],"season":["all"],"tier":"pro","ing":["合いびき肉","玉ねぎ","トマト","カレー粉","ごはん"]},{"id":"gapao_rice","name":"ガパオライス","form":"one_dish","cuisine":"ethnic","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["chicken","egg","fish"],"season":["all"],"tier":"pro","ing":["鶏ひき肉","バジル","ピーマン","卵","ごはん"]},{"id":"taco_rice","name":"タコライス","form":"one_dish","cuisine":"ethnic","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["beef","pork","milk"],"season":["all"],"tier":"pro","ing":["合いびき肉","レタス","トマト","チーズ","ごはん"]},{"id":"omurice","name":"オムライス","form":"one_dish","cuisine":"western","moods":["hearty","noodle_rice"],"time":20,"effort":2,"cost":1,"tags":["egg","chicken","milk"],"season":["all"],"tier":"free","ing":["卵","鶏もも肉","玉ねぎ","ケチャップ","ごはん"]},{"id":"chahan","name":"チャーハン","form":"one_dish","cuisine":"chinese","moods":["hearty","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["egg","pork","soy"],"season":["all"],"tier":"free","ing":["ごはん","卵","ハム","ねぎ"]},{"id":"chuka_don","name":"中華丼","form":"one_dish","cuisine":"chinese","moods":["warm","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["pork","soy","mushroom"],"season":["all"],"tier":"pro","ing":["豚こま肉","白菜","にんじん","しいたけ","ごはん"]},{"id":"mabo_don","name":"麻婆丼","form":"one_dish","cuisine":"chinese","moods":["hearty","warm","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["pork","tofu","soy"],"season":["all"],"tier":"free","ing":["豚ひき肉","豆腐","長ねぎ","ごはん"]},{"id":"shoyu_ramen","name":"醤油ラーメン","form":"one_dish","cuisine":"chinese","moods":["warm","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","egg","pork","soy"],"season":["autumn","winter"],"tier":"free","ing":["中華麺","チャーシュー","卵","ねぎ"]},{"id":"shirunashi_tantan","name":"汁なし担々麺","form":"one_dish","cuisine":"chinese","moods":["hearty","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["wheat","pork","soy","sesame"],"season":["all"],"tier":"pro","ing":["中華麺","豚ひき肉","ねぎ","ごまだれ"]},{"id":"yakisoba","name":"焼きそば","form":"one_dish","cuisine":"chinese","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","pork"],"season":["all"],"tier":"free","ing":["焼きそば麺","豚こま肉","キャベツ","もやし"]},{"id":"mizutaki","name":"鶏の水炊き","form":"one_dish","cuisine":"japanese","moods":["warm"],"time":30,"effort":1,"cost":2,"tags":["chicken","tofu","soy"],"season":["autumn","winter"],"tier":"free","ing":["鶏もも肉","白菜","豆腐","長ねぎ"]},{"id":"kimchi_nabe","name":"キムチ鍋","form":"one_dish","cuisine":"ethnic","moods":["warm","hearty"],"time":20,"effort":1,"cost":2,"tags":["pork","tofu","soy"],"season":["autumn","winter"],"tier":"pro","ing":["豚バラ肉","キムチ","豆腐","ニラ"]},{"id":"tonyu_nabe","name":"豆乳鍋","form":"one_dish","cuisine":"japanese","moods":["warm","light"],"time":20,"effort":1,"cost":2,"tags":["soy","tofu","pork"],"season":["autumn","winter"],"tier":"pro","ing":["豆乳","豚バラ肉","豆腐","白菜"]},{"id":"sake_zosui","name":"鮭雑炊","form":"one_dish","cuisine":"japanese","moods":["warm","light","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["fish","egg","soy"],"season":["all"],"tier":"pro","ing":["ごはん","鮭フレーク","卵","ねぎ"]},{"id":"tamago_zosui","name":"卵雑炊","form":"one_dish","cuisine":"japanese","moods":["warm","light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["egg","soy"],"season":["all"],"tier":"free","ing":["ごはん","卵","ねぎ"]},{"id":"hiyashi_chuka","name":"冷やし中華","form":"one_dish","cuisine":"chinese","moods":["light","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["wheat","egg","pork","soy"],"season":["summer"],"tier":"pro","ing":["中華麺","ハム","きゅうり","卵","トマト"]},{"id":"bibimbap","name":"ビビンバ","form":"one_dish","cuisine":"ethnic","moods":["hearty","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["beef","egg","soy","sesame"],"season":["all"],"tier":"pro","ing":["牛こま肉","ほうれん草","もやし","卵","ごはん"]},{"id":"sabakan_tamagotoji_don","name":"鯖缶の卵とじ丼","form":"one_dish","cuisine":"japanese","moods":["warm","light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["fish","egg","soy"],"season":["all"],"tier":"free","ing":["鯖缶","卵","玉ねぎ","ごはん"]},{"id":"tuna_tomato_cold_pasta","name":"ツナとトマトの冷製パスタ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","fish"],"season":["summer"],"tier":"free","ing":["スパゲッティ","ツナ缶","トマト","オリーブオイル"]},{"id":"tanindon","name":"他人丼","form":"one_dish","cuisine":"japanese","moods":["hearty","warm","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["beef","egg","soy"],"season":["all"],"tier":"pro","ing":["牛こま肉","卵","玉ねぎ","ごはん"]},{"id":"katsudon","name":"カツ丼(市販のカツ)","form":"one_dish","cuisine":"japanese","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["pork","egg","soy","wheat"],"season":["all"],"tier":"pro","ing":["とんかつ","卵","玉ねぎ","ごはん"]},{"id":"tori_soboro_don","name":"鶏そぼろ丼","form":"one_dish","cuisine":"japanese","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["chicken","egg","soy"],"season":["all"],"tier":"free","ing":["鶏ひき肉","卵","いんげん","ごはん"]},{"id":"kaisen_don","name":"海鮮丼","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":3,"tags":["fish","soy"],"season":["all"],"tier":"pro","ing":["刺身盛り合わせ","大葉","ごはん"]},{"id":"shirasu_don","name":"しらす丼","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":2,"tags":["fish","egg","soy"],"season":["all"],"tier":"free","ing":["しらす","卵黄","大葉","ごはん"]},{"id":"natto_kimchi_don","name":"納豆キムチ丼","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["soy","egg"],"season":["all"],"tier":"free","ing":["納豆","キムチ","卵","ごはん"]},{"id":"avocado_salmon_don","name":"アボカドサーモン丼","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":3,"tags":["fish","soy"],"season":["all"],"tier":"pro","ing":["サーモン刺身","アボカド","ごはん"]},{"id":"curry_udon","name":"カレーうどん","form":"one_dish","cuisine":"japanese","moods":["warm","hearty","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","soy","pork"],"season":["all"],"tier":"pro","ing":["冷凍うどん","豚こま肉","カレールー","長ねぎ"]},{"id":"miso_nikomi_udon","name":"味噌煮込みうどん","form":"one_dish","cuisine":"japanese","moods":["warm","noodle_rice"],"time":20,"effort":1,"cost":1,"tags":["wheat","soy","chicken","egg"],"season":["winter"],"tier":"pro","ing":["冷凍うどん","鶏もも肉","卵","味噌","長ねぎ"]},{"id":"salad_udon","name":"サラダうどん","form":"one_dish","cuisine":"japanese","moods":["light","noodle_rice"],"time":10,"effort":1,"cost":1,"tags":["wheat","soy","sesame"],"season":["summer"],"tier":"free","ing":["冷凍うどん","レタス","ツナ缶","ごまだれ"]},{"id":"mentaiko_pasta","name":"明太子パスタ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":15,"effort":1,"cost":2,"tags":["wheat","fish","milk"],"season":["all"],"tier":"pro","ing":["スパゲッティ","明太子","バター","大葉"]},{"id":"vongole","name":"ボンゴレ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":20,"effort":2,"cost":3,"tags":["wheat","fish"],"season":["spring"],"tier":"pro","ing":["スパゲッティ","あさり","にんにく","白ワイン"]},{"id":"kinoko_wafu_pasta","name":"きのこの和風パスタ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","mushroom","soy","milk"],"season":["autumn"],"tier":"free","ing":["スパゲッティ","しめじ","えのき","バター","しょうゆ"]},{"id":"tomato_pasta","name":"トマトソースパスタ","form":"one_dish","cuisine":"western","moods":["light","noodle_rice"],"time":20,"effort":1,"cost":1,"tags":["wheat"],"season":["all"],"tier":"free","ing":["スパゲッティ","トマト缶","にんにく","オリーブオイル"]},{"id":"tuna_mayo_pasta","name":"ツナマヨパスタ","form":"one_dish","cuisine":"western","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","fish","egg"],"season":["all"],"tier":"free","ing":["スパゲッティ","ツナ缶","マヨネーズ","コーン"]},{"id":"hayashi_rice","name":"ハヤシライス","form":"one_dish","cuisine":"western","moods":["hearty","warm","noodle_rice"],"time":30,"effort":2,"cost":2,"tags":["beef","wheat","milk"],"season":["all"],"tier":"pro","ing":["牛こま肉","玉ねぎ","ハヤシルー","ごはん"]},{"id":"doria","name":"ドリア","form":"one_dish","cuisine":"western","moods":["hearty","warm","noodle_rice"],"time":30,"effort":2,"cost":2,"tags":["milk","wheat","chicken"],"season":["winter"],"tier":"pro","ing":["ごはん","鶏もも肉","ホワイトソース","チーズ"]},{"id":"chicken_rice","name":"チキンライス","form":"one_dish","cuisine":"western","moods":["hearty","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["chicken","milk"],"season":["all"],"tier":"free","ing":["ごはん","鶏もも肉","玉ねぎ","ケチャップ"]},{"id":"ankake_yakisoba","name":"あんかけ焼きそば","form":"one_dish","cuisine":"chinese","moods":["warm","hearty","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["wheat","pork","soy","mushroom"],"season":["all"],"tier":"pro","ing":["焼きそば麺","豚こま肉","白菜","しいたけ"]},{"id":"shio_ramen","name":"塩ラーメン","form":"one_dish","cuisine":"chinese","moods":["warm","light","noodle_rice"],"time":15,"effort":1,"cost":1,"tags":["wheat","egg","soy"],"season":["all"],"tier":"free","ing":["中華麺","卵","ねぎ","もやし"]},{"id":"tantanmen","name":"担々麺","form":"one_dish","cuisine":"chinese","moods":["warm","hearty","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["wheat","pork","soy","sesame"],"season":["winter"],"tier":"pro","ing":["中華麺","豚ひき肉","ごまだれ","豆乳"]},{"id":"lurou_fan","name":"ルーロー飯","form":"one_dish","cuisine":"ethnic","moods":["hearty","warm","noodle_rice"],"time":30,"effort":2,"cost":2,"tags":["pork","egg","soy"],"season":["all"],"tier":"pro","ing":["豚バラ肉","ゆで卵","五香粉","ごはん"]},{"id":"khao_man_gai","name":"カオマンガイ","form":"one_dish","cuisine":"ethnic","moods":["light","noodle_rice"],"time":30,"effort":1,"cost":2,"tags":["chicken","soy","fish"],"season":["summer"],"tier":"pro","ing":["鶏もも肉","米","しょうが","ナンプラー"]},{"id":"pad_thai","name":"パッタイ","form":"one_dish","cuisine":"ethnic","moods":["hearty","noodle_rice"],"time":20,"effort":2,"cost":2,"tags":["shrimp","egg","fish"],"season":["all"],"tier":"pro","ing":["米麺","むきえび","卵","もやし","ナンプラー"]},{"id":"green_curry","name":"グリーンカレー","form":"one_dish","cuisine":"ethnic","moods":["hearty","warm","noodle_rice"],"time":20,"effort":1,"cost":2,"tags":["chicken","fish"],"season":["summer"],"tier":"pro","ing":["鶏もも肉","なす","ココナッツミルク","グリーンカレーペースト","ごはん"]},{"id":"sundubu","name":"スンドゥブチゲ","form":"one_dish","cuisine":"ethnic","moods":["warm","hearty"],"time":15,"effort":1,"cost":2,"tags":["tofu","soy","pork","egg","fish"],"season":["winter"],"tier":"pro","ing":["豆腐","豚こま肉","あさり","卵","キムチ"]},{"id":"yosenabe","name":"寄せ鍋","form":"one_dish","cuisine":"japanese","moods":["warm"],"time":30,"effort":1,"cost":3,"tags":["fish","chicken","tofu","soy"],"season":["winter"],"tier":"pro","ing":["鶏もも肉","白身魚","豆腐","白菜","長ねぎ"]},{"id":"sukiyaki_ni","name":"すき焼き風煮","form":"one_dish","cuisine":"japanese","moods":["hearty","warm"],"time":20,"effort":1,"cost":3,"tags":["beef","tofu","soy","egg"],"season":["winter"],"tier":"pro","ing":["牛こま肉","焼き豆腐","長ねぎ","卵"]},{"id":"tomato_nabe","name":"トマト鍋","form":"one_dish","cuisine":"western","moods":["warm"],"time":20,"effort":1,"cost":2,"tags":["chicken","pork"],"season":["winter"],"tier":"pro","ing":["鶏もも肉","ウインナー","キャベツ","トマト缶"]},{"id":"yudofu","name":"湯豆腐","form":"one_dish","cuisine":"japanese","moods":["warm","light"],"time":15,"effort":1,"cost":1,"tags":["tofu","soy"],"season":["winter"],"tier":"free","ing":["豆腐","昆布","ねぎ","ポン酢"]},{"id":"buta_shogayaki","name":"豚の生姜焼き","form":"main","cuisine":"japanese","moods":["hearty"],"time":15,"effort":1,"cost":1,"tags":["pork","soy"],"season":["all"],"tier":"free","ing":["豚ロース肉","玉ねぎ","しょうが"]},{"id":"tori_teriyaki","name":"鶏の照り焼き","form":"main","cuisine":"japanese","moods":["hearty"],"time":20,"effort":1,"cost":1,"tags":["chicken","soy"],"season":["all"],"tier":"free","ing":["鶏もも肉","しょうゆ","みりん"]},{"id":"torimune_negishio","name":"鶏むねのねぎ塩焼き","form":"main","cuisine":"japanese","moods":["light"],"time":15,"effort":1,"cost":1,"tags":["chicken"],"season":["all"],"tier":"free","ing":["鶏むね肉","長ねぎ","レモン"]},{"id":"karaage","name":"鶏の唐揚げ","form":"main","cuisine":"japanese","moods":["hearty"],"time":30,"effort":3,"cost":1,"tags":["chicken","soy","wheat"],"season":["all"],"tier":"free","ing":["鶏もも肉","にんにく","片栗粉"]},{"id":"sake_meuniere","name":"鮭のムニエル","form":"main","cuisine":"western","moods":["light"],"time":15,"effort":1,"cost":2,"tags":["fish","wheat","milk"],"season":["all"],"tier":"free","ing":["生鮭","小麦粉","バター"]},{"id":"sake_shioyaki","name":"鮭の塩焼き","form":"main","cuisine":"japanese","moods":["light"],"time":15,"effort":1,"cost":2,"tags":["fish"],"season":["all"],"tier":"free","ing":["生鮭","塩","大根おろし"]},{"id":"saba_misoni","name":"鯖の味噌煮","form":"main","cuisine":"japanese","moods":["warm"],"time":20,"effort":2,"cost":2,"tags":["fish","soy"],"season":["all"],"tier":"pro","ing":["鯖","味噌","しょうが"]},{"id":"buri_daikon","name":"ぶり大根","form":"main","cuisine":"japanese","moods":["warm"],"time":40,"effort":2,"cost":3,"tags":["fish","soy"],"season":["winter"],"tier":"pro","ing":["ぶり","大根","しょうが"]},{"id":"buri_teriyaki","name":"ぶりの照り焼き","form":"main","cuisine":"japanese","moods":["hearty"],"time":15,"effort":1,"cost":3,"tags":["fish","soy"],"season":["winter"],"tier":"pro","ing":["ぶり","しょうゆ","みりん"]},{"id":"mabo_dofu","name":"麻婆豆腐","form":"main","cuisine":"chinese","moods":["hearty","warm"],"time":15,"effort":1,"cost":1,"tags":["pork","tofu","soy"],"season":["all"],"tier":"free","ing":["豆腐","豚ひき肉","長ねぎ","豆板醤"]},{"id":"hoikoro","name":"回鍋肉","form":"main","cuisine":"chinese","moods":["hearty"],"time":15,"effort":1,"cost":2,"tags":["pork","soy"],"season":["all"],"tier":"free","ing":["豚バラ肉","キャベツ","ピーマン","味噌"]},{"id":"chinjao","name":"青椒肉絲","form":"main","cuisine":"chinese","moods":["hearty"],"time":20,"effort":2,"cost":2,"tags":["beef","soy"],"season":["all"],"tier":"pro","ing":["牛こま肉","ピーマン","たけのこ"]},{"id":"subuta","name":"酢豚(揚げない)","form":"main","cuisine":"chinese","moods":["hearty"],"time":30,"effort":3,"cost":2,"tags":["pork","soy"],"season":["all"],"tier":"pro","ing":["豚こま肉","玉ねぎ","ピーマン","にんじん"]},{"id":"ebichiri","name":"エビチリ","form":"main","cuisine":"chinese","moods":["hearty"],"time":20,"effort":2,"cost":3,"tags":["shrimp","soy"],"season":["all"],"tier":"pro","ing":["むきえび","長ねぎ","ケチャップ","豆板醤"]},{"id":"yodare_dori","name":"よだれ鶏","form":"main","cuisine":"chinese","moods":["light"],"time":20,"effort":1,"cost":1,"tags":["chicken","soy","sesame"],"season":["all"],"tier":"pro","ing":["鶏むね肉","長ねぎ","ラー油"]},{"id":"nikujaga","name":"肉じゃが","form":"main","cuisine":"japanese","moods":["warm"],"time":30,"effort":2,"cost":2,"tags":["beef","soy"],"season":["all"],"tier":"free","ing":["牛こま肉","じゃがいも","玉ねぎ","にんじん"]},{"id":"hamburg","name":"ハンバーグ","form":"main","cuisine":"western","moods":["hearty"],"time":30,"effort":2,"cost":2,"tags":["beef","pork","egg","wheat","milk"],"season":["all"],"tier":"free","ing":["合いびき肉","玉ねぎ","卵","パン粉"]},{"id":"pork_chap","name":"ポークチャップ","form":"main","cuisine":"western","moods":["hearty"],"time":15,"effort":1,"cost":1,"tags":["pork"],"season":["all"],"tier":"free","ing":["豚こま肉","玉ねぎ","ケチャップ"]},{"id":"tori_tomato_ni","name":"鶏のトマト煮","form":"main","cuisine":"western","moods":["warm"],"time":30,"effort":2,"cost":2,"tags":["chicken"],"season":["all"],"tier":"pro","ing":["鶏もも肉","玉ねぎ","トマト缶"]},{"id":"cream_stew","name":"クリームシチュー","form":"main","cuisine":"western","moods":["warm"],"time":40,"effort":2,"cost":2,"tags":["chicken","milk","wheat"],"season":["autumn","winter"],"tier":"free","ing":["鶏もも肉","じゃがいも","にんじん","牛乳","シチュールー"]},{"id":"potofu","name":"ポトフ","form":"main","cuisine":"western","moods":["warm","light"],"time":30,"effort":1,"cost":2,"tags":["pork"],"season":["autumn","winter"],"tier":"pro","ing":["ウインナー","キャベツ","じゃがいも","にんじん"]},{"id":"torimune_piccata","name":"鶏むねのピカタ","form":"main","cuisine":"western","moods":["light"],"time":15,"effort":1,"cost":1,"tags":["chicken","egg","milk","wheat"],"season":["all"],"tier":"pro","ing":["鶏むね肉","卵","粉チーズ"]},{"id":"butabara_hakusai","name":"豚バラと白菜の重ね煮","form":"main","cuisine":"japanese","moods":["warm","light"],"time":20,"effort":1,"cost":1,"tags":["pork","soy"],"season":["autumn","winter"],"tier":"free","ing":["豚バラ肉","白菜","ポン酢"]},{"id":"tebamoto_sappari_ni","name":"手羽元のさっぱり煮","form":"main","cuisine":"japanese","moods":["light","warm"],"time":30,"effort":1,"cost":1,"tags":["chicken","soy","egg"],"season":["all"],"tier":"pro","ing":["手羽元","ゆで卵","酢","しょうゆ"]},{"id":"sanma_shioyaki","name":"さんまの塩焼き","form":"main","cuisine":"japanese","moods":["light"],"time":15,"effort":1,"cost":1,"tags":["fish"],"season":["autumn"],"tier":"pro","ing":["さんま","塩","大根おろし"]},{"id":"toridango_hakusai","name":"鶏団子と白菜の煮込み","form":"main","cuisine":"japanese","moods":["warm"],"time":30,"effort":2,"cost":1,"tags":["chicken","egg","soy"],"season":["autumn","winter"],"tier":"pro","ing":["鶏ひき肉","白菜","しょうが"]},{"id":"tofu_steak","name":"豆腐ステーキきのこあん","form":"main","cuisine":"japanese","moods":["light","warm"],"time":15,"effort":1,"cost":1,"tags":["tofu","soy","mushroom"],"season":["all"],"tier":"free","ing":["豆腐","しめじ","えのき","めんつゆ"]},{"id":"butashabu_salad","name":"豚しゃぶサラダ","form":"main","cuisine":"japanese","moods":["light"],"time":10,"effort":1,"cost":2,"tags":["pork","soy","sesame"],"season":["spring","summer"],"tier":"free","ing":["豚しゃぶ肉","レタス","トマト","ごまだれ"]},{"id":"tonteki","name":"トンテキ","form":"main","cuisine":"japanese","moods":["hearty"],"time":15,"effort":1,"cost":2,"tags":["pork","soy"],"season":["all"],"tier":"pro","ing":["豚ロース肉","にんにく","ウスターソース"]},{"id":"goya_champuru","name":"ゴーヤチャンプルー","form":"main","cuisine":"japanese","moods":["light"],"time":15,"effort":1,"cost":1,"tags":["egg","tofu","pork","soy"],"season":["summer"],"tier":"pro","ing":["ゴーヤ","豆腐","豚こま肉","卵"]},{"id":"sake_chanchan","name":"鮭のちゃんちゃん焼き","form":"main","cuisine":"japanese","moods":["warm"],"time":20,"effort":1,"cost":2,"tags":["fish","soy"],"season":["autumn","winter"],"tier":"pro","ing":["生鮭","キャベツ","玉ねぎ","味噌","バター"]},{"id":"chicken_nanban","name":"チキン南蛮","form":"main","cuisine":"japanese","moods":["hearty"],"time":30,"effort":2,"cost":1,"tags":["chicken","egg","wheat"],"season":["all"],"tier":"pro","ing":["鶏むね肉","卵","タルタルソース"]},{"id":"gyoza","name":"餃子","form":"main","cuisine":"chinese","moods":["hearty"],"time":40,"effort":3,"cost":1,"tags":["pork","wheat","soy"],"season":["all"],"tier":"free","ing":["豚ひき肉","キャベツ","ニラ","餃子の皮"]},{"id":"tandoori_chicken","name":"タンドリーチキン","form":"main","cuisine":"ethnic","moods":["hearty"],"time":30,"effort":2,"cost":2,"tags":["chicken","milk"],"season":["all"],"tier":"pro","ing":["鶏もも肉","ヨーグルト","カレー粉"]},{"id":"atsuyaki_tamago","name":"厚焼き卵","form":"main","cuisine":"japanese","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["egg","soy"],"season":["all"],"tier":"free","ing":["卵","だし","砂糖"]},{"id":"torimune_mayopon","name":"鶏むねのマヨポン炒め","form":"main","cuisine":"japanese","moods":["hearty"],"time":15,"effort":1,"cost":1,"tags":["chicken","egg","soy"],"season":["all"],"tier":"free","ing":["鶏むね肉","マヨネーズ","ポン酢"]},{"id":"tori_garlic_saute","name":"鶏もものガーリックソテー","form":"main","cuisine":"western","moods":["hearty"],"time":15,"effort":1,"cost":2,"tags":["chicken"],"season":["all"],"tier":"free","ing":["鶏もも肉","にんにく","塩こしょう"]},{"id":"tori_amazu","name":"鶏の甘酢あん","form":"main","cuisine":"japanese","moods":["hearty"],"time":20,"effort":2,"cost":1,"tags":["chicken","soy","wheat"],"season":["all"],"tier":"pro","ing":["鶏もも肉","片栗粉","酢","しょうゆ"]},{"id":"tori_daikon_ni","name":"鶏肉と大根の煮物","form":"main","cuisine":"japanese","moods":["warm"],"time":30,"effort":2,"cost":1,"tags":["chicken","soy"],"season":["winter"],"tier":"pro","ing":["鶏もも肉","大根","しょうが"]},{"id":"tori_kinoko_cream","name":"鶏ときのこのクリーム煮","form":"main","cuisine":"western","moods":["warm"],"time":20,"effort":2,"cost":2,"tags":["chicken","milk","mushroom","wheat"],"season":["autumn"],"tier":"pro","ing":["鶏もも肉","しめじ","牛乳","小麦粉"]},{"id":"butakoma_amakara","name":"豚こまと玉ねぎの甘辛炒め","form":"main","cuisine":"japanese","moods":["hearty"],"time":10,"effort":1,"cost":1,"tags":["pork","soy"],"season":["all"],"tier":"free","ing":["豚こま肉","玉ねぎ","しょうゆ","みりん"]},{"id":"butabara_daikon","name":"豚バラと大根の煮物","form":"main","cuisine":"japanese","moods":["warm"],"time":30,"effort":2,"cost":1,"tags":["pork","soy"],"season":["winter"],"tier":"pro","ing":["豚バラ肉","大根","しょうが"]},{"id":"buta_mizore_ni","name":"豚肉のみぞれ煮","form":"main","cuisine":"japanese","moods":["light","warm"],"time":20,"effort":1,"cost":1,"tags":["pork","soy"],"season":["all"],"tier":"pro","ing":["豚こま肉","大根おろし","ポン酢"]},{"id":"buta_kyabetsu_miso","name":"豚とキャベツの味噌炒め","form":"main","cuisine":"japanese","moods":["hearty"],"time":15,"effort":1,"cost":1,"tags":["pork","soy"],"season":["all"],"tier":"free","ing":["豚こま肉","キャベツ","味噌"]},{"id":"pork_saute_mushroom","name":"ポークソテー きのこソース","form":"main","cuisine":"western","moods":["hearty"],"time":20,"effort":1,"cost":2,"tags":["pork","mushroom","milk","soy"],"season":["autumn"],"tier":"pro","ing":["豚ロース肉","しめじ","バター","しょうゆ"]},{"id":"gyuniku_oyster","name":"牛肉のオイスター炒め","form":"main","cuisine":"chinese","moods":["hearty"],"time":15,"effort":1,"cost":2,"tags":["beef","soy","fish"],"season":["all"],"tier":"pro","ing":["牛こま肉","ピーマン","オイスターソース"]},{"id":"beef_stroganoff","name":"ビーフストロガノフ","form":"main","cuisine":"western","moods":["warm","hearty"],"time":30,"effort":2,"cost":3,"tags":["beef","milk","wheat","mushroom"],"season":["winter"],"tier":"pro","ing":["牛こま肉","玉ねぎ","マッシュルーム","生クリーム"]},{"id":"gyu_gobo_shigure","name":"牛肉とごぼうのしぐれ煮","form":"main","cuisine":"japanese","moods":["warm"],"time":20,"effort":1,"cost":2,"tags":["beef","soy"],"season":["autumn"],"tier":"pro","ing":["牛こま肉","ごぼう","しょうが"]},{"id":"sake_foil","name":"鮭のホイル焼き","form":"main","cuisine":"japanese","moods":["light","warm"],"time":20,"effort":1,"cost":2,"tags":["fish","soy","mushroom","milk"],"season":["autumn"],"tier":"free","ing":["生鮭","しめじ","玉ねぎ","バター"]},{"id":"saba_shioyaki","name":"鯖の塩焼き","form":"main","cuisine":"japanese","moods":["light"],"time":15,"effort":1,"cost":1,"tags":["fish"],"season":["all"],"tier":"free","ing":["鯖","塩","大根おろし"]},{"id":"saba_tatsuta","name":"鯖の竜田揚げ","form":"main","cuisine":"japanese","moods":["hearty"],"time":20,"effort":2,"cost":1,"tags":["fish","soy","wheat"],"season":["all"],"tier":"pro","ing":["鯖","しょうが","片栗粉"]},{"id":"tara_butter","name":"鱈のバターソテー","form":"main","cuisine":"western","moods":["light"],"time":15,"effort":1,"cost":2,"tags":["fish","milk","wheat"],"season":["winter"],"tier":"pro","ing":["鱈","バター","小麦粉","レモン"]},{"id":"asari_sakamushi","name":"あさりの酒蒸し","form":"main","cuisine":"japanese","moods":["light"],"time":10,"effort":1,"cost":2,"tags":["fish"],"season":["spring"],"tier":"pro","ing":["あさり","酒","ねぎ"]},{"id":"ebi_mayo","name":"えびマヨ","form":"main","cuisine":"chinese","moods":["hearty"],"time":20,"effort":2,"cost":3,"tags":["shrimp","egg","wheat"],"season":["all"],"tier":"pro","ing":["むきえび","マヨネーズ","片栗粉","ケチャップ"]},{"id":"happosai","name":"八宝菜","form":"main","cuisine":"chinese","moods":["warm"],"time":20,"effort":2,"cost":2,"tags":["pork","shrimp","soy","mushroom"],"season":["all"],"tier":"pro","ing":["豚こま肉","むきえび","白菜","しいたけ","うずら卵"]},{"id":"nasu_hikiniku_miso","name":"なすとひき肉の味噌炒め","form":"main","cuisine":"japanese","moods":["hearty"],"time":15,"effort":1,"cost":1,"tags":["pork","soy"],"season":["summer"],"tier":"free","ing":["なす","豚ひき肉","味噌"]},{"id":"mabo_nasu","name":"麻婆なす","form":"main","cuisine":"chinese","moods":["hearty"],"time":20,"effort":1,"cost":1,"tags":["pork","soy"],"season":["summer"],"tier":"pro","ing":["なす","豚ひき肉","長ねぎ","豆板醤"]},{"id":"meatball_tomato","name":"ミートボールのトマト煮","form":"main","cuisine":"western","moods":["hearty","warm"],"time":30,"effort":2,"cost":2,"tags":["beef","pork","egg","wheat"],"season":["all"],"tier":"pro","ing":["合いびき肉","玉ねぎ","卵","トマト缶"]},{"id":"chicken_katsu","name":"チキンカツ","form":"main","cuisine":"japanese","moods":["hearty"],"time":30,"effort":2,"cost":1,"tags":["chicken","egg","wheat"],"season":["all"],"tier":"pro","ing":["鶏むね肉","卵","パン粉"]},{"id":"tofu_hamburg","name":"豆腐ハンバーグ","form":"main","cuisine":"japanese","moods":["light"],"time":20,"effort":2,"cost":1,"tags":["tofu","chicken","egg","soy"],"season":["all"],"tier":"free","ing":["豆腐","鶏ひき肉","玉ねぎ","卵"]},{"id":"atsuage_negimiso","name":"厚揚げのねぎ味噌焼き","form":"main","cuisine":"japanese","moods":["light","warm"],"time":10,"effort":1,"cost":1,"tags":["tofu","soy"],"season":["all"],"tier":"free","ing":["厚揚げ","長ねぎ","味噌"]},{"id":"tamago_tomato","name":"卵とトマトの炒め","form":"main","cuisine":"chinese","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["egg"],"season":["summer"],"tier":"free","ing":["卵","トマト","鶏がらスープ"]},{"id":"omelette","name":"オムレツ","form":"main","cuisine":"western","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["egg","milk"],"season":["all"],"tier":"free","ing":["卵","牛乳","バター","チーズ"]},{"id":"niratama","name":"ニラ玉","form":"main","cuisine":"chinese","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["egg","soy"],"season":["all"],"tier":"free","ing":["卵","ニラ","しょうゆ"]},{"id":"sabakan_tomato","name":"鯖缶のトマト煮","form":"main","cuisine":"western","moods":["warm","light"],"time":15,"effort":1,"cost":1,"tags":["fish"],"season":["all"],"tier":"free","ing":["鯖缶","トマト缶","玉ねぎ","にんにく"]},{"id":"komatsuna_ohitashi","name":"小松菜のおひたし","form":"side","cuisine":"japanese","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["soy"],"season":["all"],"tier":"free","ing":["小松菜","めんつゆ"]},{"id":"tomato_salad","name":"トマトサラダ","form":"side","cuisine":"western","moods":["light"],"time":5,"effort":1,"cost":1,"tags":[],"season":["summer"],"tier":"free","ing":["トマト","オリーブオイル","塩"]},{"id":"kyuri_shiokombu","name":"きゅうりの塩昆布和え","form":"side","cuisine":"japanese","moods":["light"],"time":5,"effort":1,"cost":1,"tags":["sesame"],"season":["summer"],"tier":"pro","ing":["きゅうり","塩昆布","ごま油"]},{"id":"horenso_gomaae","name":"ほうれん草のごま和え","form":"side","cuisine":"japanese","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["sesame","soy"],"season":["all"],"tier":"pro","ing":["ほうれん草","すりごま","しょうゆ"]},{"id":"hiyayakko","name":"冷奴","form":"side","cuisine":"japanese","moods":["light"],"time":5,"effort":1,"cost":1,"tags":["tofu","soy"],"season":["summer"],"tier":"pro","ing":["豆腐","ねぎ","しょうが"]},{"id":"kinpira","name":"きんぴらごぼう","form":"side","cuisine":"japanese","moods":["warm"],"time":15,"effort":1,"cost":1,"tags":["soy","sesame"],"season":["all"],"tier":"pro","ing":["ごぼう","にんじん","ごま"]},{"id":"kabocha_nimono","name":"かぼちゃの煮物","form":"side","cuisine":"japanese","moods":["warm"],"time":15,"effort":1,"cost":1,"tags":["soy"],"season":["autumn"],"tier":"pro","ing":["かぼちゃ","しょうゆ","みりん"]},{"id":"hijiki_nimono","name":"ひじきの煮物","form":"side","cuisine":"japanese","moods":["warm"],"time":20,"effort":1,"cost":1,"tags":["soy"],"season":["all"],"tier":"pro","ing":["ひじき","にんじん","油揚げ"]},{"id":"potato_salad","name":"ポテトサラダ","form":"side","cuisine":"western","moods":["light"],"time":20,"effort":1,"cost":1,"tags":["egg"],"season":["all"],"tier":"pro","ing":["じゃがいも","きゅうり","ハム","マヨネーズ"]},{"id":"kyabetsu_asazuke","name":"キャベツの浅漬け","form":"side","cuisine":"japanese","moods":["light"],"time":5,"effort":1,"cost":1,"tags":[],"season":["all"],"tier":"free","ing":["キャベツ","塩","昆布"]},{"id":"moyashi_namul","name":"もやしのナムル","form":"side","cuisine":"ethnic","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["sesame","soy"],"season":["all"],"tier":"free","ing":["もやし","ごま油","しょうゆ"]},{"id":"kyuri_wakame_sunomono","name":"きゅうりとわかめの酢の物","form":"side","cuisine":"japanese","moods":["light"],"time":10,"effort":1,"cost":1,"tags":["soy"],"season":["summer"],"tier":"pro","ing":["きゅうり","わかめ","酢"]},{"id":"misoshiru","name":"豆腐とわかめの味噌汁","form":"soup","cuisine":"japanese","moods":["warm"],"time":10,"effort":1,"cost":1,"tags":["soy","tofu"],"season":["all"],"tier":"free","ing":["豆腐","わかめ","味噌"]},{"id":"tonjiru","name":"豚汁","form":"soup","cuisine":"japanese","moods":["warm"],"time":20,"effort":1,"cost":1,"tags":["pork","soy"],"season":["autumn","winter"],"tier":"pro","ing":["豚こま肉","大根","にんじん","味噌"]},{"id":"wakame_soup","name":"わかめスープ","form":"soup","cuisine":"chinese","moods":["warm","light"],"time":10,"effort":1,"cost":1,"tags":["sesame"],"season":["all"],"tier":"free","ing":["わかめ","ねぎ","鶏がらスープ"]},{"id":"corn_soup","name":"コーンスープ","form":"soup","cuisine":"western","moods":["warm"],"time":10,"effort":1,"cost":1,"tags":["milk"],"season":["all"],"tier":"pro","ing":["コーンクリーム缶","牛乳"]},{"id":"tamago_soup","name":"卵スープ","form":"soup","cuisine":"chinese","moods":["warm"],"time":10,"effort":1,"cost":1,"tags":["egg","soy"],"season":["all"],"tier":"free","ing":["卵","ねぎ","鶏がらスープ"]},{"id":"minestrone","name":"ミネストローネ","form":"soup","cuisine":"western","moods":["warm"],"time":20,"effort":1,"cost":1,"tags":["pork"],"season":["winter"],"tier":"pro","ing":["ベーコン","玉ねぎ","にんじん","トマト缶"]},{"id":"nameko_misoshiru","name":"なめこの味噌汁","form":"soup","cuisine":"japanese","moods":["warm"],"time":10,"effort":1,"cost":1,"tags":["soy","mushroom"],"season":["autumn"],"tier":"pro","ing":["なめこ","豆腐","味噌"]},{"id":"kenchin_jiru","name":"けんちん汁","form":"soup","cuisine":"japanese","moods":["warm"],"time":20,"effort":1,"cost":1,"tags":["soy","tofu"],"season":["winter"],"tier":"pro","ing":["豆腐","大根","にんじん","ごぼう"]}];
+const MOODS = [['hearty','がっつり'],['light','さっぱり'],['warm','あたたまる'],['noodle_rice','麺・丼で済ませる'],[null,'なんでも']];
+const TIMES = [['quick','すぐ(〜15分)',15],['normal','ふつう(〜30分)',30],['any','こだわらない',999]];
+const TAGS = {pork:'豚',chicken:'鶏',beef:'牛',fish:'魚',shrimp:'えび',egg:'卵',milk:'乳',wheat:'小麦',soy:'大豆(醤油)',tofu:'豆腐',mushroom:'きのこ',buckwheat:'そば',sesame:'ごま'};
+const CUI = {japanese:'和',western:'洋',chinese:'中',ethnic:'エスニック'};
+const WD = ['日','月','火','水','木','金','土'];
+
+// ---- 状態(端末内) ----
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem('kyo.'+k); return v?JSON.parse(v):d }catch(e){ return d } },
+  set(k,v){ try{ localStorage.setItem('kyo.'+k, JSON.stringify(v)) }catch(e){} }
+};
+let S = {
+  exclude: store.get('exclude', []),
+  stdTime: store.get('stdTime','normal'),
+  hidden: store.get('hidden', []),
+  fav: store.get('fav', []),
+  eaten: store.get('eaten', []),       // [{id,date}]
+  softNo: store.get('softNo', []),     // [{id,date}]
+  shopping: store.get('shopping', []), // [{name,dish,checked}]
+  plan: store.get('plan', null),       // {start, days:[{date,id}]}
+  last: store.get('last', null),       // {id,date}
+  stats: store.get('stats', {sessions:0, decided:0, secs:[], taps:[], ok:0, ng:0, recipe:0})
+};
+const save = ()=>{ for (const k in S) store.set(k, S[k]) };
+const today = ()=> new Date().toISOString().slice(0,10);
+const daysAgo = d => Math.round((Date.now()-new Date(d))/86400000);
+const season = ()=>{ const m=new Date().getMonth()+1; return m<=2||m===12?'winter':m<=5?'spring':m<=8?'summer':'autumn' };
+const byId = id => DISHES.find(d=>d.id===id);
+const emoji = d => d.form==='soup'?'🍵': d.form==='side'?'🥗': d.moods.includes('noodle_rice')&&/うどん|そば|めん|麺|ラーメン|パスタ|ナポリタン|ペペロン|カルボ|ボンゴレ|ジェノ|パッタイ/.test(d.name)?(d.cuisine==='western'?'🍝':'🍜'): /鍋|チゲ|スンドゥブ|湯豆腐/.test(d.name)?'🍲': /カレー/.test(d.name)?'🍛': d.moods.includes('noodle_rice')?'🍚': d.tags.includes('fish')?'🐟': d.tags.includes('shrimp')?'🍤': d.tags.includes('chicken')?'🍗': d.tags.includes('pork')||d.tags.includes('beef')?'🥩': d.tags.includes('egg')?'🍳': '🥘';
+
+// ---- 候補選定(本体仕様 §4) ----
+function pool(mood, timeKey, extraExclude=[]) {
+  const cap = TIMES.find(t=>t[0]===timeKey)[2];
+  const softToday = new Set(S.softNo.filter(x=>x.date===today()).map(x=>x.id));
+  const soft30 = {}; S.softNo.forEach(x=>{ if(daysAgo(x.date)<=30) soft30[x.id]=(soft30[x.id]||0)+1 });
+  const eatenCount = {}; S.eaten.forEach(x=>{ eatenCount[x.id]=(eatenCount[x.id]||0)+1 });
+  const lastEaten = {}; S.eaten.forEach(x=>{ if(!lastEaten[x.id]||x.date>lastEaten[x.id]) lastEaten[x.id]=x.date });
+  const sea = season();
+  return DISHES.filter(d => (d.form==='one_dish'||d.form==='main')
+      && !d.tags.some(t=>S.exclude.includes(t)) && !S.hidden.includes(d.id) && !extraExclude.includes(d.id)
+      && d.time<=cap && (!mood || d.moods.includes(mood)) && (mood!=='noodle_rice' || d.form==='one_dish'))
+    .map(d=>{
+      let s = 0;
+      if (mood && d.moods.includes(mood)) s+=3;
+      if (S.fav.includes(d.id)) s+=2;
+      s += Math.min(2,(eatenCount[d.id]||0)*0.5);
+      if (lastEaten[d.id]) { const a=daysAgo(lastEaten[d.id]); if(a<=7) s-=5; else if(a<=14) s-=2; }
+      if (softToday.has(d.id)) s-=4;
+      s -= Math.min(1.5,(soft30[d.id]||0)*0.3);
+      if (d.season.includes(sea)) s+=1;
+      s += Math.random()*1.5;
+      return {d,s};
+    }).sort((a,b)=>b.s-a.s).map(x=>x.d);
+}
+const relaxTime = k => k==='quick'?'normal':'any';
+function buildPool(sess){
+  sess.relax=0; let p=pool(sess.mood,sess.time,sess.shown);
+  if(p.length<3){ sess.relax=1; sess.time=relaxTime(sess.time); p=pool(sess.mood,sess.time,sess.shown); }
+  if(p.length<3){ sess.relax=2; sess.mood=null; p=pool(null,sess.time,sess.shown); }
+  return p;
+}
+function pickDiverse(p,n){
+  const out=[];
+  for(const d of p){
+    if(out.length>=n) break;
+    if(out.every(o=>o.cuisine!==d.cuisine && o.form!==d.form)) out.push(d);
+  }
+  for(const d of p){ if(out.length>=n) break; if(!out.includes(d) && out.every(o=>o.cuisine!==d.cuisine)) out.push(d); }
+  for(const d of p){ if(out.length>=n) break; if(!out.includes(d)) out.push(d); }
+  return out;
+}
+const mainProtein = d => ['pork','chicken','beef','fish','shrimp','egg','tofu'].find(t=>d.tags.includes(t))||'none';
+function buildWeek(){
+  const days=[]; const used=[];
+  for(let i=0;i<7;i++){
+    const dt=new Date(); dt.setDate(dt.getDate()+i); const date=dt.toISOString().slice(0,10);
+    const wd=dt.getDay(); const timeKey=(wd===0||wd===6)?'any':S.stdTime;
+    const prev=days[i-1]?byId(days[i-1].id):null;
+    const oneDishCount=days.filter(x=>byId(x.id).form==='one_dish').length;
+    let p=pool(null,timeKey,used).filter(d=>!prev || (d.cuisine!==prev.cuisine && mainProtein(d)!==mainProtein(prev)));
+    if(oneDishCount>=3) p=p.filter(d=>d.form!=='one_dish');
+    if(!p.length) p=pool(null,timeKey,used);
+    const d=p[0]; days.push({date,id:d.id}); used.push(d.id);
+  }
+  return {start:days[0].date, days};
+}
+
+// ---- 画面 ----
+const app=document.getElementById('app');
+let sess=null, view='home', toastT;
+const toast=m=>{ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600) };
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tile=(d,cls='')=>`<div class="tile c-${d.cuisine} ${cls}">${emoji(d)}<small>イラスト仮</small></div>`;
+const metaLine=d=>`<div class="meta"><span>約${d.time}分</span><span>手間 ${'⚡'.repeat(d.effort)}</span><span>${CUI[d.cuisine]}</span></div>`;
+function render(){ app.innerHTML = VIEWS[view](); window.scrollTo(0,0); }
+function go(v){ view=v; render(); }
+function newSession(opts={}){
+  sess={ mood:null, time:S.stdTime, relax:0, shown:[], round:1, bothNo:0, redraws:2, startedAt:Date.now(), taps:0, tired:!!opts.tired, entry:opts.tired?'tired':'decide' };
+  S.stats.sessions++; save();
+}
+function startDuel(){
+  const p=buildPool(sess);
+  if(p.length<3){ return startOmakase('shortage'); }
+  const three=pickDiverse(p,3); sess.trio=three; sess.shown.push(...three.map(d=>d.id));
+  sess.round=1; sess.left=three[0]; sess.right=three[1]; sess.third=three[2]; go('duel');
+}
+function pick(winnerId){
+  sess.taps++;
+  const loser = sess.left.id===winnerId?sess.right:sess.left;
+  S.softNo.push({id:loser.id,date:today()}); save();
+  const w=byId(winnerId);
+  const cards=[...document.querySelectorAll('.duel .card')];
+  cards.forEach(c=>c.classList.add(c.dataset.id===winnerId?'win':'lose'));
+  setTimeout(()=>{
+    if(sess.round===1){ sess.round=2; sess.left=w; sess.right=sess.third; go('duel'); }
+    else { sess.decided=w; sess.method='duel'; go('decided'); }
+  },260);
+}
+function bothNo(){
+  sess.taps++; sess.bothNo++;
+  [sess.left,sess.right].forEach(d=>S.softNo.push({id:d.id,date:today()})); save();
+  if(sess.bothNo>=3){ if(confirm('3回とも合いませんでした。おまかせで決めますか?')) return startOmakase('bothNo'); }
+  const p=buildPool(sess); if(p.length<2) return startOmakase('shortage');
+  const two=pickDiverse(p,2); sess.shown.push(...two.map(d=>d.id)); sess.left=two[0]; sess.right=two[1]; go('duel');
+}
+function redraw(){ sess.taps++; S.softNo.push({id:sess.decided.id,date:today()}); save(); sess.redraws--; startDuel(); }
+function startOmakase(from){
+  sess.taps++; sess.omakaseFrom=from;
+  if(sess.tired){ sess.mood=null; sess.time='quick'; }
+  let p=buildPool(sess).filter(d=>!S.softNo.some(x=>x.id===d.id&&x.date===today()));
+  if(sess.tired) p=p.filter(d=>d.form==='one_dish'&&d.effort===1);
+  if(p.length<1) p=pool(null,'any');
+  sess.cands=p.slice(0,6); go('omakase');
+  const el=()=>document.getElementById('roul'); let i=0, steps=14, delay=60;
+  const tick=()=>{ const d=sess.cands[i%sess.cands.length]; if(el()) el().innerHTML=`<div class="em">${emoji(d)}</div><div class="nm">${esc(d.name)}</div>`; i++; if(i<steps){ delay*=1.18; setTimeout(tick,delay);} else { sess.decided=sess.cands[(i-1)%sess.cands.length]; sess.method='omakase'; sess.redraws=0; sess.omakaseAgain=1; setTimeout(()=>go('decided'),350);} };
+  tick();
+}
+function confirmDecision(){
+  sess.taps++;
+  const d=sess.decided; S.last={id:d.id,date:today()};
+  const secs=Math.round((Date.now()-sess.startedAt)/1000);
+  S.stats.decided++; S.stats.secs.push(secs); S.stats.taps.push(sess.taps); save();
+  sess.secs=secs; go('done');
+}
+function toggleShop(name,dish){
+  const i=S.shopping.findIndex(x=>x.name===name&&x.dish===dish);
+  if(i>=0) S.shopping.splice(i,1); else S.shopping.push({name,dish,checked:false});
+  save(); render();
+}
+function eat(){ S.eaten.push({id:sess.decided.id,date:today()}); save(); toast('食べた、を記録しました'); go('home'); }
+function fav(id){ const i=S.fav.indexOf(id); if(i>=0) S.fav.splice(i,1); else S.fav.push(id); save(); render(); }
+function hide(id){ if(confirm('この料理を今後出さないようにしますか?')){ S.hidden.push(id); save(); toast('出さない料理に追加しました'); go('home'); } }
+function recipe(d){ S.stats.recipe++; save(); window.open('https://www.google.com/search?q='+encodeURIComponent(d.name+' レシピ'),'_blank','noopener'); }
+function satisfy(ok){ if(ok) S.stats.ok++; else S.stats.ng++; sess.rated=true; save(); render(); }
+const median=a=>{ if(!a.length) return '–'; const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)] };
+
+const VIEWS = {
+home(){
+  const todayPlan=S.plan&&S.plan.days.find(x=>x.date===today());
+  const last=S.last&&byId(S.last.id);
+  const unchecked=S.shopping.filter(x=>!x.checked).length;
+  return `<div class="screen">
+    <div class="top"><span class="eyebrow">献立決定アプリ(仮) プロトタイプ</span><button onclick="go('settings')">設定</button></div>
+    <div><h1>今日なに食べる?</h1><div class="sub">${new Date().getMonth()+1}月${new Date().getDate()}日(${WD[new Date().getDay()]})</div></div>
+    ${todayPlan?`<button class="card home-card" onclick="planGo('${todayPlan.id}')" style="padding:12px"><div class="em">${emoji(byId(todayPlan.id))}</div><div style="flex:1"><div class="eyebrow">今日の予定</div><div class="cname">${esc(byId(todayPlan.id).name)}</div><div class="sub">これでいく → タップ。変えたいなら下から決め直す</div></div></button>`:
+      last?`<div class="card home-card" style="padding:12px"><div class="em">${emoji(last)}</div><div><div class="eyebrow">${S.last.date===today()?'今日決めた料理':'前回'}</div><div class="cname">${esc(last.name)}</div></div></div>`:''}
+    <div class="grow"></div>
+    <div class="stack">
+      <button class="btn primary big" onclick="newSession();go('mood')">今日の献立を決める</button>
+      <button class="btn secondary" onclick="newSession({tired:true});startOmakase('tired')">疲れた日(おまかせで即決)</button>
+      <button class="btn secondary" onclick="go('week')">1週間ぶん作る</button>
+      <div class="row" style="justify-content:space-between;padding:4px 4px 0">
+        <button class="btn ghost" style="width:auto" onclick="go('shopping')">買い物リスト ${unchecked?`<span class="badge">${unchecked}</span>`:''}</button>
+        <button class="btn ghost" style="width:auto" onclick="go('history')">履歴・お気に入り</button>
+      </div>
+    </div>
+    <div class="proto">料理150件はアプリ同梱データ。イラストは仮。データは端末内にだけ保存されます</div>
+  </div>`;
+},
+mood(){
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">戻る</button><button onclick="startDuel()">スキップ</button></div>
+    <h1>今日はどんな気分?</h1>
+    <div class="section"><div class="eyebrow">気分</div><div class="chips">${MOODS.map(([k,l])=>`<button class="chip" aria-pressed="${sess.mood===k}" onclick="sess.mood=${k?`'${k}'`:'null'};sess.taps++;render()">${l}</button>`).join('')}</div></div>
+    <div class="section"><div class="eyebrow">時間</div><div class="chips">${TIMES.map(([k,l])=>`<button class="chip" aria-pressed="${sess.time===k}" onclick="sess.time='${k}';sess.taps++;render()">${l}</button>`).join('')}</div></div>
+    <div class="grow"></div>
+    <button class="btn primary big" onclick="sess.taps++;startDuel()">候補を見る</button>
+    <div class="proto">何も触らなくても進めます</div>
+  </div>`;
+},
+duel(){
+  const c=d=>`<button class="card" data-id="${d.id}" onclick="pick('${d.id}')">${tile(d)}<div class="cbody"><div class="cname">${esc(d.name)}</div>${metaLine(d)}</div></button>`;
+  return `<div class="screen">
+    <div class="top"><span><b>${sess.round}/2</b> どっち?</span><button onclick="bothNo()">どちらも違う</button></div>
+    ${sess.relax?`<div class="note">${sess.relax===1?'条件に合う料理が少ないので、時間を広げました':'条件に合う料理が少ないので、気分の条件を外しました'}</div>`:''}
+    <div class="duel">${c(sess.left)}<div class="vs">VS</div>${c(sess.right)}</div>
+  </div>`;
+},
+omakase(){
+  return `<div class="screen">
+    <div class="top"><span>おまかせ</span><span></span></div>
+    <h1>${sess.tired?'疲れた日は、これで':'えらんでます…'}</h1>
+    ${sess.tired?'<div class="sub">すぐ・1品・手間なし に絞っています</div>':''}
+    <div class="card roulette" id="roul"></div>
+    <div class="grow"></div>
+  </div>`;
+},
+decided(){
+  const d=sess.decided;
+  return `<div class="screen">
+    <div class="top"><span class="eyebrow">今日はこれ</span><button onclick="hide('${d.id}')">…</button></div>
+    <div class="card hero">${tile(d)}<div class="cbody"><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}</div></div>
+    <div class="section"><div class="eyebrow">主な材料</div><div class="chips">${d.ing.map(i=>`<span class="chip static">${esc(i)}</span>`).join('')}</div></div>
+    ${sess.relax?`<div class="note">${sess.relax===1?'時間を広げて探しました':'気分の条件を外して探しました'}</div>`:''}
+    ${sess.omakaseFrom==='tired'?'<div class="note">疲れた日モード: すぐ・1品</div>':''}
+    <div class="grow"></div>
+    <div class="stack">
+      <button class="btn primary" onclick="confirmDecision()">これにする</button>
+      ${sess.method==='omakase' ? (sess.omakaseAgain?`<button class="btn secondary" onclick="sess.omakaseAgain=0;startOmakase('again')">もう一回まわす(1回だけ)</button>`:'') :
+        (sess.redraws>0?`<button class="btn secondary" onclick="redraw()">別の候補を見る(残り${sess.redraws})</button>`:`<button class="btn secondary" onclick="startOmakase('redraws')">おまかせで決める</button>`)}
+      ${sess.method!=='omakase'&&sess.redraws>0?`<button class="btn ghost" onclick="startOmakase('decided')">おまかせで決める</button>`:''}
+    </div>
+  </div>`;
+},
+done(){
+  const d=sess.decided;
+  const inShop=n=>S.shopping.some(x=>x.name===n&&x.dish===d.id);
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">ホーム</button><button onclick="fav('${d.id}')">${S.fav.includes(d.id)?'♥ お気に入り':'♡ お気に入り'}</button></div>
+    <div class="card hero">${tile(d)}<div class="cbody"><div class="eyebrow">決まりました</div><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}</div></div>
+    <div class="section"><div class="eyebrow">材料メモ(タップで買い物リストへ)</div><div class="chips">${d.ing.map(i=>`<button class="chip ing ${inShop(i)?'on':''}" onclick="toggleShop('${esc(i)}','${d.id}')">${inShop(i)?'✓ ':''}${esc(i)}</button>`).join('')}</div></div>
+    ${sess.rated?'':`<div class="note row" style="justify-content:space-between"><span>決めた直後の納得は?(自己テスト用)</span><span class="row"><button class="chip" onclick="satisfy(true)">納得</button><button class="chip" onclick="satisfy(false)">いまいち</button></span></div>`}
+    <div class="grow"></div>
+    <div class="stack">
+      <button class="btn secondary" onclick="recipe(${JSON.stringify(d).replace(/"/g,'&quot;')})">レシピを見る(検索を開く)</button>
+      <button class="btn primary" onclick="eat()">食べた</button>
+    </div>
+    <div class="proto">決めるまで ${sess.secs}秒・${sess.taps}タップ</div>
+  </div>`;
+},
+week(){
+  if(!sess||!sess.week){ sess={week:buildWeek(), taps:0}; }
+  const w=sess.week;
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">戻る</button><button onclick="sess.week=buildWeek();render()">全部作り直す</button></div>
+    <div><h1>1週間ぶん</h1><div class="sub">気に入らない日だけ「別の料理に」。同じ系や主材料が続かないように組んでいます</div></div>
+    <div class="week">${w.days.map((x,i)=>{const d=byId(x.id);const dt=new Date(x.date);return `<div class="day"><span class="w">${WD[dt.getDay()]}</span><div class="em c-${d.cuisine} tile" style="aspect-ratio:auto">${emoji(d)}</div><div class="nm">${esc(d.name)}<small>約${d.time}分・${d.ing.slice(0,3).join('、')}</small></div><button onclick="reroll(${i})">別の料理に</button></div>`}).join('')}</div>
+    <div class="grow"></div>
+    <button class="btn primary" onclick="S.plan=sess.week;S.plan.days.forEach(x=>byId(x.id).ing.forEach(n=>{if(!S.shopping.some(s=>s.name===n&&s.dish===x.id))S.shopping.push({name:n,dish:x.id,checked:false})}));save();toast('今週の献立を保存しました');go('home')">この献立にする</button>
+    <div class="proto">材料名は週の買い物リストにまとまります</div>
+  </div>`;
+},
+shopping(){
+  const groups={}; S.shopping.forEach(x=>{ (groups[x.name]=groups[x.name]||[]).push(x) });
+  const names=Object.keys(groups).sort((a,b)=>(groups[a].every(x=>x.checked)?1:0)-(groups[b].every(x=>x.checked)?1:0));
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">戻る</button><button onclick="if(confirm('チェック済みを消しますか?')){S.shopping=S.shopping.filter(x=>!x.checked);save();render()}">チェック済みを消す</button></div>
+    <h1>買い物リスト</h1>
+    ${names.length?`<div class="list">${names.map(n=>{const g=groups[n];const on=g.every(x=>x.checked);return `<button class="item" onclick="S.shopping.forEach(x=>{if(x.name==='${esc(n)}')x.checked=${!on}});save();render()"><span class="check ${on?'on':''}">${on?'✓':''}</span><span class="n" style="${on?'opacity:.5;text-decoration:line-through':''}">${esc(n)}</span><span class="d">${[...new Set(g.map(x=>byId(x.dish)?byId(x.dish).name:''))].filter(Boolean).join('・')}</span></button>`}).join('')}</div>`:'<div class="sub">決まった料理の材料をタップすると、ここに入ります</div>'}
+    <div class="grow"></div>
+  </div>`;
+},
+history(){
+  const eaten=[...S.eaten].reverse().slice(0,30);
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">戻る</button><span></span></div>
+    <h1>履歴</h1>
+    ${S.fav.length?`<div class="section"><div class="eyebrow">お気に入り</div><div class="chips">${S.fav.map(id=>`<span class="chip static">♥ ${esc(byId(id).name)}</span>`).join('')}</div></div>`:''}
+    <div class="section"><div class="eyebrow">食べた</div>${eaten.length?`<div class="list">${eaten.map(x=>`<div class="item"><span>${emoji(byId(x.id))}</span><span class="n">${esc(byId(x.id).name)}</span><span class="d">${x.date.slice(5).replace('-','/')}</span></div>`).join('')}</div>`:'<div class="sub">まだありません。「食べた」を押すと残ります(7日以内は候補から下がります)</div>'}</div>
+    <div class="grow"></div>
+  </div>`;
+},
+settings(){
+  const st=S.stats; const rated=st.ok+st.ng;
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">戻る</button><span></span></div>
+    <h1>設定</h1>
+    <div class="section"><div class="eyebrow">標準の時間</div><div class="chips">${TIMES.map(([k,l])=>`<button class="chip" aria-pressed="${S.stdTime===k}" onclick="S.stdTime='${k}';save();render()">${l}</button>`).join('')}</div></div>
+    <div class="section"><div class="eyebrow">苦手・食べられない食材(候補から外す)</div><div class="chips">${Object.entries(TAGS).map(([k,l])=>`<button class="chip" aria-pressed="${S.exclude.includes(k)}" onclick="const i=S.exclude.indexOf('${k}');i>=0?S.exclude.splice(i,1):S.exclude.push('${k}');save();render()">${l}</button>`).join('')}</div>${S.exclude.includes('soy')?'<div class="note">大豆(醤油)を外すと候補が大幅に減ります</div>':''}</div>
+    ${S.hidden.length?`<div class="section"><div class="eyebrow">出さない料理</div><div class="chips">${S.hidden.map(id=>`<button class="chip" onclick="S.hidden=S.hidden.filter(x=>x!=='${id}');save();render()">✕ ${esc(byId(id).name)}</button>`).join('')}</div></div>`:''}
+    <div class="section"><div class="eyebrow">自己テストの記録</div><div class="stat"><div><b>${median(st.secs)}<small>秒</small></b><span>決定までの中央値</span></div><div><b>${median(st.taps)}</b><span>タップ数の中央値</span></div><div><b>${rated?Math.round(st.ok/rated*100)+'%':'–'}</b><span>納得率(${rated}回)</span></div></div>
+    <div class="stat"><div><b>${st.sessions}</b><span>開始</span></div><div><b>${st.decided}</b><span>決定</span></div><div><b>${st.recipe}</b><span>レシピを見た</span></div></div></div>
+    <div class="grow"></div>
+    <button class="btn ghost" style="color:var(--danger)" onclick="if(confirm('履歴・設定をすべて消しますか?')){try{Object.keys(localStorage).filter(k=>k.startsWith('kyo.')).forEach(k=>localStorage.removeItem(k))}catch(e){};location.reload()}">すべてのデータを消す</button>
+  </div>`;
+}
+};
+function reroll(i){ const w=sess.week; const used=w.days.map(x=>x.id); const dt=new Date(w.days[i].date); const wd=dt.getDay(); const timeKey=(wd===0||wd===6)?'any':S.stdTime;
+  const prev=w.days[i-1]?byId(w.days[i-1].id):null, next=w.days[i+1]?byId(w.days[i+1].id):null;
+  let p=pool(null,timeKey,used).filter(d=>(!prev||(d.cuisine!==prev.cuisine&&mainProtein(d)!==mainProtein(prev)))&&(!next||(d.cuisine!==next.cuisine&&mainProtein(d)!==mainProtein(next))));
+  if(!p.length) p=pool(null,timeKey,used); if(!p.length) return toast('候補がありません');
+  w.days[i].id=p[0].id; render(); }
+function planGo(id){ newSession(); sess.decided=byId(id); sess.method='plan'; sess.redraws=0; sess.taps=1; go('decided'); }
+window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.render=render; window.S=S; window.sess=sess;
+Object.defineProperty(window,'sess',{get:()=>sess,set:v=>{sess=v}});
+render();
+</script>
