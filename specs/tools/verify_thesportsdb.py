@@ -8,6 +8,9 @@
 
 2026-09-20 の無料キーでの実行結果: 一覧は5件、チームは24件、次の試合と直近結果は1件、
 シーズン全試合は15件、順位表は5行で切れる。無料キーは動作確認用と考える。
+同日の有料キーでの実行結果: 上限は外れ、シーズン全試合 380/306 件、順位表 20/18 行。
+ただし J1 の 2026-2027 順位表は 0 行(TheSportsDB 側のデータ不備)。
+    python3 verify_thesportsdb.py --key <キー> --leagues ラ・リーガ,エールディヴィジ,J1   # 一部だけ再実行
 
 標準ライブラリだけで動く。Mac の python3 でそのまま実行できる。
 結果は画面に表と要約を出し、生の JSON を ./thesportsdb_raw/ に保存する。
@@ -104,7 +107,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--key", default="123", help="API キー(無料キーは 123。古い資料では 3)")
     ap.add_argument("--season", default=None, help="シーズン文字列。既定は 2026-2027 と 2026 の両方を試す")
+    ap.add_argument("--leagues", default=None, help="表示名をカンマ区切りで指定すると、そのリーグだけ実行する")
     args = ap.parse_args()
+    only = set(x.strip() for x in args.leagues.split(",")) if args.leagues else None
 
     seasons = [args.season] if args.season else ["2026-2027", "2026"]
     today = date.today().isoformat()
@@ -116,6 +121,8 @@ def main():
 
     country_cache = {}
     for country, words, label, known_id in TARGETS:
+        if only and label not in only:
+            continue
         if country not in country_cache:
             data, st, _ = fetch(args.key, "search_all_leagues.php", {"c": country, "s": "Soccer"})
             leagues = (data or {}).get("countries") or (data or {}).get("leagues") or []
@@ -124,29 +131,44 @@ def main():
             print(f"[{country}] リーグ一覧: {st}, {len(leagues)} 件")
             for lg in leagues:
                 print(f"    {lg.get('idLeague')}  {lg.get('strLeague')}  ({lg.get('strCurrentSeason') or '?'})")
-        lg = pick_league(country_cache[country], words)
+        # 既知の ID を最優先。一覧の名前検索は別名で女子リーグ等を拾うことがある(ラ・リーガ → Liga F の実例あり)
+        lg = next((x for x in country_cache[country] if x.get("idLeague") == known_id), None)
         if not lg:
-            # 一覧で切れていた場合は既知の ID で直接引く
             data, st, _ = fetch(args.key, "lookupleague.php", {"id": known_id})
             found = (data or {}).get("leagues") or []
             save_raw(f"league_{known_id}.json", data)
             if found:
                 lg = found[0]
                 print(f"[{label}] 一覧に無いので既知の ID {known_id} で直接取得: {st}, {lg.get('strLeague')}")
-            else:
-                rows.append((label, known_id, "見つからず", "", "", "", "", ""))
-                notes.append(f"{label}: 一覧にも既知の ID {known_id} にも該当なし")
-                continue
+        if not lg:
+            lg = pick_league(country_cache[country], words)
+            if lg:
+                notes.append(f"{label}: 既知の ID {known_id} で引けず、名前検索で {lg.get('strLeague')} (id={lg.get('idLeague')}) を選んだ。正しいか要確認")
+        if not lg:
+            rows.append((label, known_id, "見つからず", "", "", "", "", ""))
+            notes.append(f"{label}: 一覧にも既知の ID {known_id} にも該当なし")
+            continue
         lid = lg["idLeague"]
         lname = lg.get("strLeague")
         cur = lg.get("strCurrentSeason") or ""
         print(f"\n--- {label}: {lname} (id={lid}, current season={cur or '?'})")
 
-        # チーム一覧
-        data, st, _ = fetch(args.key, "lookup_all_teams.php", {"id": lid})
-        teams = (data or {}).get("teams") or []
-        save_raw(f"teams_{lid}.json", data)
-        print(f"  チーム一覧: {st}, {len(teams)} チーム")
+        # チーム一覧。有料キーでは lookup_all_teams.php が 404 になった実例があるので、複数の取り方を順に試す
+        teams, how = [], "-"
+        for path, params, label_how in (
+            ("lookup_all_teams.php", {"id": lid}, "lookup_all_teams"),
+            ("search_all_teams.php", {"l": lname}, "search_all_teams(l=リーグ名)"),
+        ):
+            data, st, _ = fetch(args.key, path, params)
+            got = (data or {}).get("teams") or []
+            print(f"  チーム一覧({label_how}): {st}, {len(got)} チーム")
+            if got:
+                teams, how = got, label_how
+                save_raw(f"teams_{lid}.json", data)
+                break
+        if not teams:
+            # 順位表やシーズン全試合からチーム数を推定する(後で埋める)
+            notes.append(f"{label}: チーム一覧が v1 のどの取り方でも取れない。順位表の行数で代用する")
 
         # 次の試合、直近の結果
         data, st, _ = fetch(args.key, "eventsnextleague.php", {"id": lid})
@@ -192,7 +214,38 @@ def main():
                 break
             print(f"  順位表(lookuptable s={sname}): {st}, 0 行")
 
-        rows.append((label, lid, str(len(teams)), f"{ns['count']}", f"{ps['scored']}/{ps['count']}", f"{ss['scored']}/{ss['count']}", season_used, str(table_rows)))
+        # 順位表を結果から自前で計算する(API の順位表が欠けるリーグの保険。J1 2026-2027 で実例あり)
+        if season_used != "-":
+            evs = json.load(open(os.path.join(RAW_DIR, f"season_{lid}_{season_used}.json"), encoding="utf-8")).get("events") or []
+            calc = {}
+            for e in evs:
+                h, a = e.get("strHomeTeam"), e.get("strAwayTeam")
+                hs, as_ = e.get("intHomeScore"), e.get("intAwayScore")
+                if not h or not a or hs in (None, "") or as_ in (None, ""):
+                    continue
+                hs, as_ = int(hs), int(as_)
+                for t in (h, a):
+                    calc.setdefault(t, {"p": 0, "pts": 0, "gd": 0})
+                calc[h]["p"] += 1
+                calc[a]["p"] += 1
+                calc[h]["gd"] += hs - as_
+                calc[a]["gd"] += as_ - hs
+                if hs > as_:
+                    calc[h]["pts"] += 3
+                elif hs < as_:
+                    calc[a]["pts"] += 3
+                else:
+                    calc[h]["pts"] += 1
+                    calc[a]["pts"] += 1
+            ranked = sorted(calc.items(), key=lambda kv: (-kv[1]["pts"], -kv[1]["gd"], kv[0]))
+            print(f"  順位表(結果から自前計算): {len(ranked)} チーム")
+            for i, (t, v) in enumerate(ranked[:5], 1):
+                print(f"      {i}. {t}  {v['p']}試合 {v['pts']}pt (得失点差 {v['gd']:+d})")
+            if not teams:
+                teams = [{"strTeam": t} for t in ranked]
+                how = "結果から推定"
+
+        rows.append((label, lid, f"{len(teams)}({how})" if how != "-" else str(len(teams)), f"{ns['count']}", f"{ps['scored']}/{ps['count']}", f"{ss['scored']}/{ss['count']}", season_used, str(table_rows)))
 
     print("\n" + "=" * 78)
     print("要約")
@@ -202,7 +255,7 @@ def main():
         print(" | ".join(r))
 
     caps = []
-    if all(r[2] == "24" for r in rows if r[2].isdigit()):
+    if all(r[2].startswith("24") for r in rows if r[2][:1].isdigit()):
         caps.append("チーム一覧が全リーグ 24 件: 件数上限に当たっている")
     if all(r[3] == "1" for r in rows if r[3]):
         caps.append("次の試合が全リーグ 1 件: 件数上限に当たっている")
