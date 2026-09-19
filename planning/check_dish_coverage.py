@@ -12,9 +12,9 @@ from collections import Counter
 
 MOODS = [("なんでも", None), ("がっつり", "hearty"), ("さっぱり", "light"),
          ("あたたまる", "warm"), ("麺・丼", "noodle_rice")]
-# 時間選択 → 許容する調理時間の上限。「いつも通り」は標準20分+10分。
-TIMES = [("10分", 10), ("20分", 20), ("いつも通り", 30), ("40分以上OK", 999)]
-RELAX = {10: 20, 20: 30, 30: 999, 999: 999}
+# 時間選択(3段階) → 許容する調理時間の上限。既定値は設定の「標準」(初期値ふつう)。
+TIMES = [("すぐ(〜15分)", 15), ("ふつう(〜30分)", 30), ("こだわらない", 999)]
+RELAX = {15: 30, 30: 999, 999: 999}
 EXCLUDES = [None, "pork", "chicken", "beef", "fish", "shrimp", "egg",
             "milk", "wheat", "soy", "tofu", "mushroom", "buckwheat", "sesame"]
 TIERS = [("全件", None), ("無料枠", "free")]
