@@ -2,9 +2,12 @@
 """TheSportsDB の無料キーで、対象リーグの日程・結果・順位表がどれだけ取れるかを確かめる。
 
 使い方:
-    python3 verify_thesportsdb.py            # 既定の5リーグ + サウジ
+    python3 verify_thesportsdb.py                    # 既定の5リーグ + サウジ、無料キー
+    python3 verify_thesportsdb.py --key <Patreonのキー>  # 有料キーで制限が外れるか確かめる
     python3 verify_thesportsdb.py --season 2026-2027
-    python3 verify_thesportsdb.py --key 123  # キーを変える(既定は 123)
+
+2026-09-20 の無料キーでの実行結果: 一覧は5件、チームは24件、次の試合と直近結果は1件、
+シーズン全試合は15件、順位表は5行で切れる。無料キーは動作確認用と考える。
 
 標準ライブラリだけで動く。Mac の python3 でそのまま実行できる。
 結果は画面に表と要約を出し、生の JSON を ./thesportsdb_raw/ に保存する。
@@ -25,16 +28,17 @@ BASE = "https://www.thesportsdb.com/api/v1/json/{key}/"
 WAIT_SEC = 2.5
 RAW_DIR = "thesportsdb_raw"
 
-# 探したいリーグ。国と、リーグ名に含まれていてほしい語(小文字)。
+# 探したいリーグ。国、リーグ名に含まれていてほしい語(小文字)、表示名、既知の ID。
+# 無料キーでは国別一覧が5件で切れるので、一覧に出なければ既知の ID を直接使う。
 TARGETS = [
-    ("England", ["premier league"], "プレミアリーグ"),
-    ("Spain", ["la liga", "laliga"], "ラ・リーガ"),
-    ("Germany", ["bundesliga"], "ブンデスリーガ"),
-    ("Netherlands", ["eredivisie"], "エールディヴィジ"),
-    ("Japan", ["j1", "j-league", "j. league", "j league"], "J1"),
-    ("Japan", ["j2"], "J2"),
-    ("Japan", ["j3"], "J3"),
-    ("Saudi Arabia", ["pro league", "saudi"], "サウジ・プロリーグ"),
+    ("England", ["premier league"], "プレミアリーグ", "4328"),
+    ("Spain", ["la liga", "laliga"], "ラ・リーガ", "4335"),
+    ("Germany", ["bundesliga"], "ブンデスリーガ", "4331"),
+    ("Netherlands", ["eredivisie"], "エールディヴィジ", "4337"),
+    ("Japan", ["j1", "j-league", "j. league", "j league"], "J1", "4633"),
+    ("Japan", ["j2"], "J2", "4824"),
+    ("Japan", ["j3"], "J3", "4967"),
+    ("Saudi Arabia", ["pro league", "saudi"], "サウジ・プロリーグ", "4668"),
 ]
 
 # 2部を1部と取り違えないための除外語
@@ -111,7 +115,7 @@ def main():
     notes = []
 
     country_cache = {}
-    for country, words, label in TARGETS:
+    for country, words, label, known_id in TARGETS:
         if country not in country_cache:
             data, st, _ = fetch(args.key, "search_all_leagues.php", {"c": country, "s": "Soccer"})
             leagues = (data or {}).get("countries") or (data or {}).get("leagues") or []
@@ -122,9 +126,17 @@ def main():
                 print(f"    {lg.get('idLeague')}  {lg.get('strLeague')}  ({lg.get('strCurrentSeason') or '?'})")
         lg = pick_league(country_cache[country], words)
         if not lg:
-            rows.append((label, "-", "見つからず", "", "", "", "", ""))
-            notes.append(f"{label}: リーグ一覧に該当なし。上の一覧から手で ID を選ぶ必要あり")
-            continue
+            # 一覧で切れていた場合は既知の ID で直接引く
+            data, st, _ = fetch(args.key, "lookupleague.php", {"id": known_id})
+            found = (data or {}).get("leagues") or []
+            save_raw(f"league_{known_id}.json", data)
+            if found:
+                lg = found[0]
+                print(f"[{label}] 一覧に無いので既知の ID {known_id} で直接取得: {st}, {lg.get('strLeague')}")
+            else:
+                rows.append((label, known_id, "見つからず", "", "", "", "", ""))
+                notes.append(f"{label}: 一覧にも既知の ID {known_id} にも該当なし")
+                continue
         lid = lg["idLeague"]
         lname = lg.get("strLeague")
         cur = lg.get("strCurrentSeason") or ""
@@ -188,6 +200,19 @@ def main():
     print(" | ".join(hdr))
     for r in rows:
         print(" | ".join(r))
+
+    caps = []
+    if all(r[2] == "24" for r in rows if r[2].isdigit()):
+        caps.append("チーム一覧が全リーグ 24 件: 件数上限に当たっている")
+    if all(r[3] == "1" for r in rows if r[3]):
+        caps.append("次の試合が全リーグ 1 件: 件数上限に当たっている")
+    if all(r[7] in ("5", "0") for r in rows if r[7]):
+        caps.append("順位表が 5 行以下: 件数上限に当たっている")
+    if caps:
+        print("\n件数上限の判定(無料キーの制限と考えられる):")
+        for c in caps:
+            print("  - " + c)
+        print("  → 有料キーで再実行して、この判定が消えるかを見る")
 
     print("\n手で確かめること(この出力と DAZN や公式サイトを見比べる):")
     print("  1. 「次の試合」の日時・対戦相手が正しいか(時刻は UTC 表記なので +9 時間)")
