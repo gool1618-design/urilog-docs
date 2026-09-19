@@ -11,6 +11,7 @@
 同日の有料キーでの実行結果: 上限は外れ、シーズン全試合 380/306 件、順位表 20/18 行。
 ただし J1 の 2026-2027 順位表は 0 行(TheSportsDB 側のデータ不備)。
     python3 verify_thesportsdb.py --key <キー> --leagues ラ・リーガ,エールディヴィジ,J1   # 一部だけ再実行
+    python3 verify_thesportsdb.py --key <キー> --livescore   # 試合中に実行して、ライブスコアの遅れを見る
 
 標準ライブラリだけで動く。Mac の python3 でそのまま実行できる。
 結果は画面に表と要約を出し、生の JSON を ./thesportsdb_raw/ に保存する。
@@ -103,12 +104,51 @@ def events_summary(events):
     }
 
 
+def check_livescore(key):
+    """有料キーでライブスコアを取る。v2(ヘッダ認証)を試し、だめなら v1 の latestsoccer.php。"""
+    print(f"ライブスコア検証  now={datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    print("=" * 78)
+    target_ids = {t[3]: t[2] for t in TARGETS}
+    events, how = [], None
+    # v2
+    url = "https://www.thesportsdb.com/api/v2/json/livescore/soccer"
+    req = urllib.request.Request(url, headers={"User-Agent": "spec-verify/0.1", "X-API-KEY": key})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            body = r.read().decode("utf-8", errors="replace")
+            data = json.loads(body) if body.strip() else {}
+            events = data.get("livescore") or data.get("events") or []
+            how = f"v2 livescore/soccer (HTTP {r.status})"
+            save_raw("livescore_v2.json", data)
+    except Exception as e:  # noqa: BLE001
+        print(f"  v2 は失敗: {e}")
+    time.sleep(WAIT_SEC)
+    if not events:
+        data, st, _ = fetch(key, "latestsoccer.php", {})
+        events = (data or {}).get("teams") or (data or {}).get("events") or []
+        how = f"v1 latestsoccer.php ({st})"
+        save_raw("livescore_v1.json", data)
+    print(f"  取得方法: {how}, 進行中 {len(events)} 試合(全リーグ)")
+    hit = [e for e in events if str(e.get("idLeague")) in target_ids]
+    print(f"  対象リーグ分: {len(hit)} 試合")
+    for e in hit:
+        print(f"      [{target_ids[str(e.get('idLeague'))]}] {e.get('strHomeTeam')} {e.get('intHomeScore')}-{e.get('intAwayScore')} {e.get('strAwayTeam')}"
+              f"  進行: {e.get('strProgress') or e.get('strStatus') or '?'}  更新: {e.get('updated') or e.get('strTimestamp') or '?'}")
+    if not hit:
+        print("  対象リーグの試合が進行中でないか、応答の形が想定と違う。生の JSON を thesportsdb_raw/ で確認する")
+    print("\n手で確かめること: 上のスコアと経過を、DAZN や公式サイトの実際の試合と見比べて、何分遅れているかを記録する。5分後にもう一度実行すると更新の様子が分かる")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--key", default="123", help="API キー(無料キーは 123。古い資料では 3)")
     ap.add_argument("--season", default=None, help="シーズン文字列。既定は 2026-2027 と 2026 の両方を試す")
     ap.add_argument("--leagues", default=None, help="表示名をカンマ区切りで指定すると、そのリーグだけ実行する")
+    ap.add_argument("--livescore", action="store_true", help="ライブスコアだけを取得する(試合中に実行する)")
     args = ap.parse_args()
+    if args.livescore:
+        check_livescore(args.key)
+        return
     only = set(x.strip() for x in args.leagues.split(",")) if args.leagues else None
 
     seasons = [args.season] if args.season else ["2026-2027", "2026"]

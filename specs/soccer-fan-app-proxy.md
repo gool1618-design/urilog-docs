@@ -19,6 +19,7 @@ published: false
 3. 対応リーグの追加・変更をアプリの更新なしで行う。
 4. 順位表を自前で計算し、API 側の欠落(J1 2026-27)に依存しない。
 5. 上流が落ちても、最後に取れたデータを返し続ける。
+6. 試合中のスコアを約2分遅れで配る。精度・速さの競争はしない。
 
 ---
 
@@ -49,6 +50,7 @@ iPhone アプリ ──GET──▶ Worker(読み取り API) ──▶ KV(キャ
 | `/v1/competitions/{id}/matches?season=` | そのシーズンの全試合(日程と結果) | 1日1回 + 試合日は1時間おき |
 | `/v1/competitions/{id}/standings?season=` | 順位表(自前計算) | matches 更新のたび |
 | `/v1/teams/{teamId}/matches?season=` | チーム視点の試合一覧(matches から抽出。アプリの主経路) | 同上 |
+| `/v1/live` | 対応リーグで進行中の試合のスコアと経過 | 試合中は2分おき。`max-age=60` |
 
 `id` はプロキシ側の安定した ID(例 `eng-pl`, `esp-ll`, `ger-bl`, `ned-ed`, `jpn-j1`, `jpn-j2`, `jpn-j3`, `sau-pl`)。TheSportsDB の数値 ID は内部にだけ持ち、上流を差し替えても API は変えない。
 
@@ -116,7 +118,23 @@ iPhone アプリ ──GET──▶ Worker(読み取り API) ──▶ KV(キャ
 
 - `status`: `scheduled` / `finished` / `postponed` / `cancelled` / `unknown`。
 - `kickoffTimeKnown`: 上流に時刻が無い(日付だけ)場合は false。アプリは「時刻未定」と出し、通知を登録しない。
-- 試合中の状態は持たない。キックオフから2時間半はアプリ側で「試合中」と表示する。
+- `matches` には試合中の状態を持たない。進行中の試合は `/v1/live` で別に配り、アプリはそちらを優先する。`/v1/live` が取れないときは、キックオフから2時間半を「試合中」として扱う。
+
+`/v1/live`
+
+```json
+{
+  "fetchedAt": "2026-09-20T13:31:05Z",
+  "delayNote": "約2分遅れ",
+  "matches": [
+    { "id": "tsdb-2231455", "competitionId": "jpn-j1",
+      "homeGoals": 1, "awayGoals": 0, "period": "2H", "minute": 67, "status": "inPlay" }
+  ]
+}
+```
+
+- `period`: `1H` / `HT` / `2H` / `ET` / `PEN` / `FT`。`minute` は上流に無ければ null。
+- 終了(`FT`)になった試合は、次の結果ジョブで `matches` 側に確定値が入るまで `/v1/live` に残す。
 
 `/v1/competitions/{id}/standings`
 
@@ -143,10 +161,13 @@ iPhone アプリ ──GET──▶ Worker(読み取り API) ──▶ KV(キャ
 |---|---|---|
 | 日程・チーム | 毎日 03:00 | 全対応リーグの `eventsseason` と チーム一覧を取得し、KV を丸ごと置き換える。順位表を再計算 |
 | 結果 | 毎時 05分 | 「直近36時間にキックオフがある試合」を持つリーグだけ `eventsseason` を再取得。変化があれば順位表を再計算 |
+| ライブ | 2分おき | `matches` のキャッシュに「キックオフから3時間以内の試合」が1つでもあるときだけ上流のライブスコアを取得。対応リーグ分だけ抜き出して `/v1/live` を更新。無いときは何もしない |
 
 - 毎時ジョブが上流を叩くのは試合日のみ。7リーグで週末に集中しても1時間に7回。
-- 1日の上流リクエスト数は最大でも 7 × (2 + 24) ≒ 180。Premium の毎分100に対して余裕がある。
-- Cloudflare 無料プランの Cron Trigger は 5 本まで。2 本で足りる。
+- ライブジョブは1回の呼び出しで全試合が返る(リーグ単位ではない)ので、試合がある時間帯に2分おきで1回ずつ。1日中どこかで試合があっても最大720回。
+- 1日の上流リクエスト数は最大でも 180 + 720 ≒ 900。Premium の毎分100に対して余裕がある。
+- Cloudflare 無料プランの Cron Trigger は 5 本まで。3 本で足りる。
+- **KV の書き込みは無料枠が1日1,000回。** ライブジョブは内容が変わったときだけ書き、試合が無い時間帯は動かさないので、週末でも数百回に収まる見込み。超えそうなら `/v1/live` だけ KV ではなく Cache API に置く。
 
 ### 上流(TheSportsDB v1)との対応
 
@@ -155,6 +176,7 @@ iPhone アプリ ──GET──▶ Worker(読み取り API) ──▶ KV(キャ
 | シーズン全試合 | `eventsseason.php?id={league}&s={season}` | 検証で 380/306 件が取れた。これを唯一の試合ソースにする |
 | チーム一覧 | `search_all_teams.php?l={league name}`、失敗時は全試合の home/away から集める | 有料キーで `lookup_all_teams` が 404 だった |
 | リーグ情報 | `lookupleague.php?id=` | `strCurrentSeason` は J1 で「2027」と誤っていたので信用しない。シーズン文字列は設定で持つ |
+| ライブスコア | v2 `livescore/soccer`(ヘッダ `X-API-KEY`)。無ければ v1 `latestsoccer.php` | Premium 限定。応答は全リーグの進行中試合なので、`idLeague` で対応リーグ分だけ抜く。実際の遅れは検証スクリプトで確認する |
 
 フィールド対応:
 
