@@ -406,7 +406,7 @@ v1.0の実行時AI利用はゼロ。
 
 1. プロトタイプ仕様(`meal-decision-prototype-spec.md`)に沿って5日で実装し、1週間の自己テスト
 2. 無料枠68件のイラストを先に揃える(データは CSV で済んでいる)
-3. v1.1 に向けて Supabase のテーブル設計(グループ、メンバー、日次セッション、回答、共有リスト、合図)
+3. ~~Supabase のテーブル設計~~ 済: `meal-decision-supabase-schema.md`
 4. プライバシーポリシーの下書き(1人モード: 端末内のみ / グループ: Supabase に送るデータ)
 
 ### 関連文書
@@ -419,3 +419,4 @@ v1.0の実行時AI利用はゼロ。
 | `check_dish_coverage.py` | 絞り込み後に3件以上残るかの検証スクリプト |
 | `generate_dish_list.py` | CSV からリスト文書を生成するスクリプト |
 | `meal-decision-prototype-spec.md` | 決定フローのプロトタイプ仕様と自己テストの合格条件 |
+| `meal-decision-supabase-schema.md` | グループ機能の Supabase テーブル設計、RLS、集計関数、通知 |

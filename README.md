@@ -25,3 +25,4 @@ GitHub Pages で公開しています。
 - [献立決定アプリ(仮) 企画・仕様 第3版](planning/meal-decision-app-spec.md)
 - [献立決定アプリ(仮) 料理データ リスト設計(150件)](planning/meal-decision-dish-list.md)(元表: `planning/meal-decision-dishes.csv`、検証: `planning/check_dish_coverage.py`、生成: `planning/generate_dish_list.py`)
 - [献立決定アプリ(仮) プロトタイプ仕様](planning/meal-decision-prototype-spec.md)
+- [献立決定アプリ(仮) Supabase テーブル設計](planning/meal-decision-supabase-schema.md)
