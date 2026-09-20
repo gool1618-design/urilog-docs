@@ -89,6 +89,21 @@ h2{font-size:20px;font-weight:700}
 .wish .nm{font-weight:700}
 .wish .pt{margin-left:auto;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
 .final{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile img,.gt img,.em img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+.plus{display:flex;gap:8px}
+.plus button{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px dashed var(--line);border-radius:12px;padding:8px 10px;text-align:left}
+.plus button.on{border-style:solid;border-color:var(--hi);background:var(--hi);color:var(--hi-ink)}
+.plus .pe{font-size:22px}
+.plus .pn{font-size:13px;font-weight:600;line-height:1.2}
+.plus .pn small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.plus button.on .pn small{color:var(--hi-ink)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.field input[type=text]{font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+.photo{width:100%;aspect-ratio:4/3;border-radius:16px;border:1.5px dashed var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden;position:relative}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.mine{display:flex;flex-direction:column;gap:8px}
 .final .card{text-align:left;width:100%}
 .note{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--ink)}
 .hero{position:relative}
@@ -151,6 +166,7 @@ let S = {
   plan: store.get('plan', null),       // {start, days:[{date,id}]}
   last: store.get('last', null),       // {id,date}
   stats: store.get('stats', {sessions:0, decided:0, secs:[], taps:[], ok:0, ng:0, recipe:0}),
+  custom: store.get('custom', []),   // マイ料理 [{id,name,form,cuisine,moods,time,effort,cost,tags,season,tier,ing,photo}]
   group: store.get('group', null),   // デモ用の家族 {members:[{name,me,proxy}], cook}
   gsess: store.get('gsess', null)    // その日の家族セッション {date, deck, answers:{name:{final,champs}}, status, decided}
 };
@@ -158,8 +174,9 @@ const save = ()=>{ for (const k in S) store.set(k, S[k]) };
 const today = ()=> new Date().toISOString().slice(0,10);
 const daysAgo = d => Math.round((Date.now()-new Date(d))/86400000);
 const season = ()=>{ const m=new Date().getMonth()+1; return m<=2||m===12?'winter':m<=5?'spring':m<=8?'summer':'autumn' };
-const byId = id => DISHES.find(d=>d.id===id);
-const emoji = d => d.form==='soup'?'🍵': d.form==='side'?'🥗': d.moods.includes('noodle_rice')&&/うどん|そば|めん|麺|ラーメン|パスタ|ナポリタン|ペペロン|カルボ|ボンゴレ|ジェノ|パッタイ/.test(d.name)?(d.cuisine==='western'?'🍝':'🍜'): /鍋|チゲ|スンドゥブ|湯豆腐/.test(d.name)?'🍲': /カレー/.test(d.name)?'🍛': d.moods.includes('noodle_rice')?'🍚': d.tags.includes('fish')?'🐟': d.tags.includes('shrimp')?'🍤': d.tags.includes('chicken')?'🍗': d.tags.includes('pork')||d.tags.includes('beef')?'🥩': d.tags.includes('egg')?'🍳': '🥘';
+const ALL = ()=> DISHES.concat(S.custom);
+const byId = id => ALL().find(d=>d.id===id);
+const emoji = d => d.photo?`<img src="${d.photo}" alt="">`: d.form==='soup'?'🍵': d.form==='side'?'🥗': d.moods.includes('noodle_rice')&&/うどん|そば|めん|麺|ラーメン|パスタ|ナポリタン|ペペロン|カルボ|ボンゴレ|ジェノ|パッタイ/.test(d.name)?(d.cuisine==='western'?'🍝':'🍜'): /鍋|チゲ|スンドゥブ|湯豆腐/.test(d.name)?'🍲': /カレー/.test(d.name)?'🍛': d.moods.includes('noodle_rice')?'🍚': d.tags.includes('fish')?'🐟': d.tags.includes('shrimp')?'🍤': d.tags.includes('chicken')?'🍗': d.tags.includes('pork')||d.tags.includes('beef')?'🥩': d.tags.includes('egg')?'🍳': '🥘';
 
 // ---- 候補選定(本体仕様 §4) ----
 function pool(mood, timeKey, extraExclude=[], ctx={}) {
@@ -169,7 +186,7 @@ function pool(mood, timeKey, extraExclude=[], ctx={}) {
   const eatenCount = {}; S.eaten.forEach(x=>{ eatenCount[x.id]=(eatenCount[x.id]||0)+1 });
   const lastEaten = {}; S.eaten.forEach(x=>{ if(!lastEaten[x.id]||x.date>lastEaten[x.id]) lastEaten[x.id]=x.date });
   const sea = season();
-  return DISHES.filter(d => (d.form==='one_dish'||d.form==='main')
+  return ALL().filter(d => (d.form==='one_dish'||d.form==='main')
       && !d.tags.some(t=>S.exclude.includes(t)) && !S.hidden.includes(d.id) && !extraExclude.includes(d.id)
       && d.time<=cap && (!mood || d.moods.includes(mood)) && (mood!=='noodle_rice' || d.form==='one_dish'))
     .map(d=>{
@@ -314,6 +331,7 @@ home(){
       <div class="row" style="justify-content:space-between;padding:4px 4px 0">
         <button class="btn ghost" style="width:auto" onclick="go('shopping')">買い物リスト ${unchecked?`<span class="badge">${unchecked}</span>`:''}</button>
         <button class="btn ghost" style="width:auto" onclick="go('history')">履歴・お気に入り</button>
+        <button class="btn ghost" style="width:auto" onclick="go('mine')">マイ料理</button>
       </div>
     </div>
     <div class="proto">料理150件はアプリ同梱データ。イラストは仮。データは端末内にだけ保存されます</div>
@@ -372,6 +390,7 @@ done(){
     <div class="top"><button class="back" onclick="go('home')">ホーム</button><button onclick="fav('${d.id}')">${S.fav.includes(d.id)?'♥ お気に入り':'♡ お気に入り'}</button></div>
     <div class="card hero">${tile(d)}<div class="cbody"><div class="eyebrow">決まりました</div><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}</div></div>
     <div class="section"><div class="eyebrow">材料メモ(タップで買い物リストへ)</div><div class="chips">${d.ing.map(i=>`<button class="chip ing ${inShop(i)?'on':''}" onclick="toggleShop('${esc(i)}','${d.id}')">${inShop(i)?'✓ ':''}${esc(i)}</button>`).join('')}</div></div>
+    ${(()=>{ const ps=sess.plus||(sess.plus=plusOne(d)); if(!ps.length) return ''; return `<div class="section"><div class="eyebrow">+1品あると(タップで材料メモに追加)</div><div class="plus">${ps.map(x=>{const on=x.ing.every(n=>S.shopping.some(sh=>sh.name===n&&sh.dish===x.id)); return `<button class="${on?'on':''}" onclick="togglePlus('${x.id}','${d.id}')"><span class="pe">${emoji(x)}</span><span class="pn">${esc(x.name)}<small>${x.form==='soup'?'汁物':'副菜'}・約${x.time}分</small></span></button>`}).join('')}</div></div>`; })()}
     ${sess.rated?'':`<div class="note row" style="justify-content:space-between"><span>決めた直後の納得は?(自己テスト用)</span><span class="row"><button class="chip" onclick="satisfy(true)">納得</button><button class="chip" onclick="satisfy(false)">いまいち</button></span></div>`}
     <div class="grow"></div>
     <div class="stack">
@@ -430,6 +449,30 @@ final(){
     ${top.length>1?`<div class="row" style="justify-content:center;gap:16px"><button class="btn ghost" style="width:auto" onclick="finalPick('${top[Math.random()<0.5?0:1].d.id}')">コイントス</button><button class="btn ghost" style="width:auto" onclick="startOmakase('family')">おまかせ</button></div>`:''}
   </div>`;
 },
+mine(){
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('settings')">戻る</button><button onclick="newDraft()">＋ 追加</button></div>
+    <div><h1>マイ料理</h1><div class="sub">写真と名前と時間だけで登録できます。候補として同じように出ます</div></div>
+    ${S.custom.length?`<div class="mine">${S.custom.map(d=>`<div class="day"><div class="em tile c-japanese" style="aspect-ratio:auto;overflow:hidden">${emoji(d)}</div><div class="nm">${esc(d.name)}<small>約${d.time}分・${d.form==='one_dish'?'1品完結':'主菜'}${d.ing.length?'・'+d.ing.slice(0,3).join('、'):''}</small></div><button onclick="removeCustom('${d.id}')">削除</button></div>`).join('')}</div>`:'<div class="note">まだありません。「＋ 追加」から、家の定番や、ここにない料理を登録してください</div>'}
+    <div class="grow"></div>
+    <button class="btn primary" onclick="newDraft()">料理を登録する</button>
+  </div>`;
+},
+mine_edit(){
+  const chip=(on,label,fn)=>`<button class="chip" aria-pressed="${on}" onclick="${fn};render()">${label}</button>`;
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('mine')">キャンセル</button><span></span></div>
+    <h1>料理を登録</h1>
+    <label class="photo">${draft.photo?`<img src="${draft.photo}" alt="">`:'<span>写真を選ぶ(任意)</span>'}<input type="file" accept="image/*" id="photoInput" onchange="onPhoto(this)"></label>
+    <div class="field"><label for="dishName">料理名(必須)</label><input type="text" id="dishName" value="${esc(draft.name)}" placeholder="例: うちの唐揚げ" oninput="draft.name=this.value"></div>
+    <div class="field"><label>時間の目安</label><div class="chips">${[10,15,20,30,40].map(t=>chip(draft.time===t,`約${t}分`,`draft.time=${t}`)).join('')}</div></div>
+    <div class="field"><label>形</label><div class="chips">${chip(draft.form==='main','主菜(ごはんは別)',"draft.form='main'")}${chip(draft.form==='one_dish','1品で完結(丼・麺・鍋)',"draft.form='one_dish'")}</div></div>
+    <div class="field"><label>気分(任意、複数可)</label><div class="chips">${MOODS.filter(m=>m[0]).map(([k,l])=>chip(draft.moods.includes(k),l,`(draft.moods.includes('${k}')?draft.moods.splice(draft.moods.indexOf('${k}'),1):draft.moods.push('${k}'))`)).join('')}</div></div>
+    <div class="field"><label for="dishIng">主な材料(任意、読点区切り)</label><input type="text" id="dishIng" value="${esc(draft.ing)}" placeholder="例: 鶏もも肉、にんにく、片栗粉" oninput="draft.ing=this.value"></div>
+    <div class="grow"></div>
+    <button class="btn primary" onclick="saveDraft()">登録する</button>
+  </div>`;
+},
 shopping(){
   const groups={}; S.shopping.forEach(x=>{ (groups[x.name]=groups[x.name]||[]).push(x) });
   const names=Object.keys(groups).sort((a,b)=>(groups[a].every(x=>x.checked)?1:0)-(groups[b].every(x=>x.checked)?1:0));
@@ -458,11 +501,12 @@ settings(){
     <div class="section"><div class="eyebrow">標準の時間</div><div class="chips">${TIMES.map(([k,l])=>`<button class="chip" aria-pressed="${S.stdTime===k}" onclick="S.stdTime='${k}';save();render()">${l}</button>`).join('')}</div></div>
     <div class="section"><div class="eyebrow">苦手・食べられない食材(候補から外す)</div><div class="chips">${Object.entries(TAGS).map(([k,l])=>`<button class="chip" aria-pressed="${S.exclude.includes(k)}" onclick="const i=S.exclude.indexOf('${k}');i>=0?S.exclude.splice(i,1):S.exclude.push('${k}');save();render()">${l}</button>`).join('')}</div>${S.exclude.includes('soy')?'<div class="note">大豆(醤油)を外すと候補が大幅に減ります</div>':''}</div>
     ${S.hidden.length?`<div class="section"><div class="eyebrow">出さない料理</div><div class="chips">${S.hidden.map(id=>`<button class="chip" onclick="S.hidden=S.hidden.filter(x=>x!=='${id}');save();render()">✕ ${esc(byId(id).name)}</button>`).join('')}</div></div>`:''}
+    <div class="section"><div class="eyebrow">マイ料理</div><button class="btn secondary" onclick="go('mine')">自分の料理を登録・編集(${S.custom.length}件)</button></div>
     <div class="section"><div class="eyebrow">家族モード(デモ)</div><div class="chips"><button class="chip" aria-pressed="${!!S.group}" onclick="enableDemoGroup(${!S.group})">${S.group?'オン(パパ・はるちゃんと共有中)':'オフ'}</button></div><div class="sub">本物はサーバー(Supabase)で同期します。ここでは偽のメンバーが端末内で動きます</div></div>
     <div class="section"><div class="eyebrow">自己テストの記録</div><div class="stat"><div><b>${median(st.secs)}<small>秒</small></b><span>決定までの中央値</span></div><div><b>${median(st.taps)}</b><span>タップ数の中央値</span></div><div><b>${rated?Math.round(st.ok/rated*100)+'%':'–'}</b><span>納得率(${rated}回)</span></div></div>
     <div class="stat"><div><b>${st.sessions}</b><span>開始</span></div><div><b>${st.decided}</b><span>決定</span></div><div><b>${st.recipe}</b><span>レシピを見た</span></div></div></div>
     <div class="grow"></div>
-    <button class="btn ghost" style="color:var(--danger)" onclick="if(confirm('履歴・設定をすべて消しますか?')){try{Object.keys(localStorage).filter(k=>k.startsWith('kyo.')).forEach(k=>localStorage.removeItem(k))}catch(e){};location.reload()}">すべてのデータを消す</button>
+    <button class="btn ghost" style="color:var(--danger)" onclick="if(confirm('履歴・設定をすべて消しますか?')){try{Object.keys(localStorage).filter(k=>k.startsWith('kyo.')&&k!=='kyo.custom').forEach(k=>localStorage.removeItem(k))}catch(e){};location.reload()}">履歴と設定を消す(マイ料理は残ります)</button>
   </div>`;
 }
 };
@@ -496,13 +540,47 @@ function groupCard(){
   if(g.status==='decided'){ const d=byId(g.decided); return `<div class="card home-card" style="padding:12px"><div class="em">${emoji(d)}</div><div style="flex:1"><div class="eyebrow">家族で決まった料理</div><div class="cname">${esc(d.name)}</div></div></div>`; }
   return `<div class="card" style="padding:12px"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="eyebrow">家族の今日 ${answered}/${m.length}</span><button class="btn ghost" style="width:auto;min-height:0;font-size:13px" onclick="go('waiting')">状況を見る ›</button></div>${memberList()}</div>`;
 }
+// ===== +1品(副菜・汁物の提案。選ばせない) =====
+function plusOne(d){
+  if(/鍋|チゲ|スンドゥブ|湯豆腐/.test(d.name)) return [];
+  const recent=new Set(S.eaten.filter(x=>daysAgo(x.date)<=7).map(x=>x.id));
+  const ok=x=>x.time<=10 && !recent.has(x.id) && !x.tags.some(t=>S.exclude.includes(t)) && x.season.some(z=>z==='all'||z===season());
+  const shuffle=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+  const soups=shuffle(DISHES.filter(x=>x.form==='soup'&&ok(x))), sides=shuffle(DISHES.filter(x=>x.form==='side'&&ok(x)));
+  const jp=d.cuisine==='japanese'||d.cuisine==='chinese';
+  const soup=soups.find(x=>jp?x.cuisine!=='western':x.cuisine==='western')||soups[0];
+  const side=sides.find(x=>jp?x.cuisine!=='western':true)||sides[0];
+  if(d.form==='main') return [soup,side].filter(Boolean);
+  const pasta=/パスタ|ナポリタン|ペペロン|カルボ|ボンゴレ|ジェノ|ドリア|ライス$|カレー/.test(d.name)&&d.cuisine!=='japanese';
+  return [pasta?side:soup].filter(Boolean);
+}
+function togglePlus(id,mainId){
+  const x=byId(id); const inShop=x.ing.every(n=>S.shopping.some(sh=>sh.name===n&&sh.dish===id));
+  if(inShop) S.shopping=S.shopping.filter(sh=>sh.dish!==id); else x.ing.forEach(n=>{ if(!S.shopping.some(sh=>sh.name===n&&sh.dish===id)) S.shopping.push({name:n,dish:id,checked:false}); });
+  save(); render();
+}
+// ===== マイ料理 =====
+let draft=null;
+function newDraft(){ draft={name:'',time:20,form:'main',moods:[],ing:'',photo:null}; go('mine_edit'); }
+function saveDraft(){
+  if(!draft.name.trim()) return toast('料理名を入れてください');
+  const d={id:'my_'+Date.now(), name:draft.name.trim(), form:draft.form, cuisine:'japanese', moods:draft.moods, time:draft.time, effort:draft.time<=15?1:draft.time<=30?2:3, cost:2, tags:[], season:['all'], tier:'free', ing:draft.ing.split(/[、,\s]+/).filter(Boolean).slice(0,6), photo:draft.photo, mine:true};
+  S.custom.push(d); save(); toast('マイ料理に登録しました'); go('mine');
+}
+function removeCustom(id){ if(confirm('削除しますか?')){ S.custom=S.custom.filter(d=>d.id!==id); save(); render(); } }
+function onPhoto(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const img=new Image(); const url=URL.createObjectURL(f);
+  img.onload=()=>{ const W=640, r=Math.min(1,W/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*r); c.height=Math.round(img.height*r); c.getContext('2d').drawImage(img,0,0,c.width,c.height); draft.photo=c.toDataURL('image/jpeg',.8); URL.revokeObjectURL(url); render(); };
+  img.src=url;
+}
 function reroll(i){ const w=sess.week; const used=w.days.map(x=>x.id); const dt=new Date(w.days[i].date); const wd=dt.getDay(); const timeKey=(wd===0||wd===6)?'any':S.stdTime;
   const prev=w.days[i-1]?byId(w.days[i-1].id):null, next=w.days[i+1]?byId(w.days[i+1].id):null;
   let p=pool(null,timeKey,used).filter(d=>(!prev||(d.cuisine!==prev.cuisine&&mainProtein(d)!==mainProtein(prev)))&&(!next||(d.cuisine!==next.cuisine&&mainProtein(d)!==mainProtein(next))));
   if(!p.length) p=pool(null,timeKey,used); if(!p.length) return toast('候補がありません');
   w.days[i].id=p[0].id; render(); }
 function planGo(id){ newSession(); sess.decided=byId(id); sess.method='plan'; sess.redraws=0; sess.taps=1; go('decided'); }
-window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.enableDemoGroup=enableDemoGroup; window.nudge=nudge; window.proxyAnswer=proxyAnswer; window.finalPick=finalPick; window.submitAnswer=submitAnswer; window.render=render; window.S=S; window.sess=sess;
+window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.enableDemoGroup=enableDemoGroup; window.nudge=nudge; window.proxyAnswer=proxyAnswer; window.finalPick=finalPick; window.submitAnswer=submitAnswer; window.togglePlus=togglePlus; window.newDraft=newDraft; window.saveDraft=saveDraft; window.removeCustom=removeCustom; window.onPhoto=onPhoto; Object.defineProperty(window,'draft',{get:()=>draft,set:v=>{draft=v}}); window.render=render; window.S=S; window.sess=sess;
 Object.defineProperty(window,'sess',{get:()=>sess,set:v=>{sess=v}});
 render();
 </script>

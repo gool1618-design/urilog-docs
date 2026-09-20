@@ -2,7 +2,7 @@
 
 - 対象: 本体仕様 第3版 §5「ふたり・家族モード」と「週の献立の共有とリクエスト」。1人モードはサーバーを使わないので対象外
 - 前提: 契約済みの Supabase。Auth は「Appleでサインイン」。クライアントは iOS アプリのみ
-- 方針: **料理データはDBに置かない。** アプリ同梱のJSON(`dish_id` と `data_version`)を参照するだけ。DBに入るのは「誰が・いつ・どれを選んだか」と共有物だけ
+- 方針: **同梱の料理データはDBに置かない。** アプリ同梱のJSON(`dish_id` と `data_version`)を参照するだけ。DBに入るのは「誰が・いつ・どれを選んだか」、共有物、メンバーが登録したマイ料理だけ
 - 容量の目安: 1グループ1日あたり 1〜2KB。1,000グループが1年使って 500MB 未満
 
 ---
@@ -27,6 +27,7 @@ groups ── group_members(端末あり / 端末なし=代理)
    │      ├── weekly_plan_days(曜日ごとの料理)
    │      └── change_requests(「変えたい」)
    │
+   ├── custom_dishes(メンバーのマイ料理。写真は Storage)
    ├── shopping_items(共有の買い物リスト = 材料名)
    ├── eaten_history(共有の食べた履歴)
    ├── signals(疲れた / 私が作る)
@@ -266,7 +267,32 @@ create table signals (
 - `tired` を作る人が出したら、その日の候補選定を「すぐ・1品完結・手間1」に固定する(クライアントが読んで反映)。
 - `i_cook` は `cook_assignments` の upsert と同時に入れる。通知の元になる。
 
-### 2.10 invites(招待)
+### 2.10 custom_dishes(マイ料理の共有)
+
+```sql
+create table custom_dishes (
+  id           text primary key,                 -- 'my_' + uuid。端末で採番し、同梱料理の id と衝突しない
+  group_id     uuid not null references groups(id) on delete cascade,
+  owner        uuid not null references group_members(id),
+  name         text not null,
+  form         text not null default 'main',     -- main / one_dish
+  cook_time    int  not null default 20,
+  mood_tags    text[] not null default '{}',
+  exclude_tags text[] not null default '{}',
+  ingredients  text[] not null default '{}',     -- 名前のみ
+  photo_path   text,                             -- Storage: custom-dishes/<group_id>/<id>.jpg
+  created_at   timestamptz not null default now(),
+  deleted_at   timestamptz
+);
+create index ix_custom_dishes_group on custom_dishes(group_id) where deleted_at is null;
+```
+
+- 1人モードのマイ料理は端末内だけ。グループに入ったとき、本人が「家族にも出す」を選んだ料理だけをここに置く。
+- 他のメンバーの端末は、起動時と Realtime でこの表を読み、同梱の料理データに合成して候補に出す。`daily_sessions.deck` に `my_...` の id が入っていても、この表から名前と写真を引けるので表示できる。
+- 写真は長辺640pxのJPEG(100KB前後)。Storage のバケットはグループ単位のフォルダにし、RLS と同じ条件で読める。
+- 削除は `deleted_at` を立てるだけ。過去の decisions / eaten_history から名前を引けるようにする。
+
+### 2.11 invites(招待)
 
 ```sql
 create table invites (
@@ -321,6 +347,7 @@ $$;
 | shopping_items | 同じグループ | 同じグループ | 同じグループ | 同じグループ |
 | eaten_history | 同じグループ | 同じグループ | なし | marked_by 本人 |
 | signals | 同じグループ | 自分の行 | なし | 自分の行 |
+| custom_dishes | 同じグループ | 同じグループ(owner = 自分) | owner 本人 | owner 本人(deleted_at) |
 | invites | 同じグループ | 作成は関数のみ | なし | created_by 本人 |
 
 代表的なポリシーの書き方:
