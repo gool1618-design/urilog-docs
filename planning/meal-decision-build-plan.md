@@ -1,6 +1,6 @@
 # ピクモグ 実装計画 v1.0
 
-- リポジトリ: `gool1618-design/pikumogu`(**非公開**。作成待ち)。公開文書はこの `urilog-docs` に置く
+- リポジトリ: `gool1618-design/pickmogu`(**非公開**)。公開文書はこの `urilog-docs` に置く
 - 構成: バイヤーノート(UriLog)と同じ。XcodeGen の `project.yml`、SwiftUI、iOS 17、SwiftData、Supabase Swift(v1.1 から)。日本語コメント、`HANDOFF.md` で引き継ぎ
 - Bundle ID: `com.ryuya0816.Pikumogu`。表示名「ピクモグ」
 - 開発環境: Xcode でビルドする。Claude のクラウド環境では Swift のコンパイルができないため、コードは Xcode 側でビルドして確認する
