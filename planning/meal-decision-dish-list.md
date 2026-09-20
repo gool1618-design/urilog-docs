@@ -1,4 +1,4 @@
-# 献立決定アプリ(仮) 料理データ v1.0 リスト設計(150件)
+# ピクモグ 料理データ v1.0 リスト設計(150件)
 
 - 元データ: `meal-decision-dishes.csv`。この文書は `generate_dish_list.py` で生成する。編集はCSV側で行い、生成し直す
 - 検証スクリプト: `check_dish_coverage.py`

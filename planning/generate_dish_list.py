@@ -38,7 +38,7 @@ def main():
     weak_head, weak_body = weak.split('\n',1)
     n_quick=sum(v for k,v in dist_time.items() if k<=15); n_normal=sum(v for k,v in dist_time.items() if k<=30)
 
-    doc=f"""# 献立決定アプリ(仮) 料理データ v1.0 リスト設計({len(rows)}件)
+    doc=f"""# ピクモグ 料理データ v1.0 リスト設計({len(rows)}件)
 
 - 元データ: `meal-decision-dishes.csv`。この文書は `generate_dish_list.py` で生成する。編集はCSV側で行い、生成し直す
 - 検証スクリプト: `check_dish_coverage.py`
