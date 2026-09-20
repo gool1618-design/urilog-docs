@@ -18,6 +18,11 @@ title: バイヤーノート サポート
 
 - [プライバシーポリシー](vinfit-privacy.md)
 
+### STADIUM(準備中)
+
+- [プライバシーポリシー(ドラフト)](stadium-privacy.md)
+- [利用規約(ドラフト)](stadium-terms.md)
+
 ---
 
 ## お問い合わせ
