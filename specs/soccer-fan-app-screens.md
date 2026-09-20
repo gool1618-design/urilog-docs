@@ -1,9 +1,9 @@
 ---
-title: サッカー推し活アプリ 画面仕様
+title: STADIUM 画面仕様
 published: false
 ---
 
-# サッカー推し活アプリ 画面仕様
+# STADIUM 画面仕様
 
 作成日: 2026年9月20日
 前提: `soccer-fan-app.md` の決定事項に基づく。初期リリース(v1.0)の範囲を書く。Pro 機能は境界だけ示す。

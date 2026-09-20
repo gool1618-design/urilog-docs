@@ -1,9 +1,9 @@
 ---
-title: サッカー推し活アプリ プロキシ設計
+title: STADIUM プロキシ設計
 published: false
 ---
 
-# サッカー推し活アプリ プロキシ設計
+# STADIUM プロキシ設計
 
 作成日: 2026年9月20日
 前提: データ源は TheSportsDB Premium(v1 API、キーは URL に含める)。プロキシは Cloudflare Workers + KV を想定。アプリはプロキシだけを見る。
