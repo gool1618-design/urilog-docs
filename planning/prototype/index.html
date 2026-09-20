@@ -64,6 +64,17 @@ h2{font-size:20px;font-weight:700}
 .duel .card.win{transform:scale(1.02);box-shadow:0 0 0 3px var(--hi),var(--shadow)}
 .duel .card.lose{opacity:.45;transform:scale(.97)}
 .vs{text-align:center;color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.2em}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8px;min-height:0}
+.gcard{background:var(--card);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;text-align:left;min-height:0;transition:transform .15s,box-shadow .15s}
+.gcard .gt{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:34px;position:relative}
+.gcard .gb{padding:6px 10px 8px;display:flex;flex-direction:column;gap:1px}
+.gcard .gn{font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.gcard .gm{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.gcard.champ{border-color:var(--hi);box-shadow:0 0 0 2px var(--hi)}
+.gcard.champ .gt::before{content:"いまの候補";position:absolute;left:8px;top:6px;font-size:10px;font-weight:700;background:var(--hi);color:var(--hi-ink);padding:2px 7px;border-radius:999px}
+.gcard.picked{transform:scale(1.04);box-shadow:0 0 0 3px var(--hi)}
+.gcard.dim{opacity:.35}
+.hint{font-size:13px;color:var(--muted);text-align:center}
 .note{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--ink)}
 .hero{position:relative}
 .hero .tile{font-size:96px}
@@ -134,7 +145,7 @@ const byId = id => DISHES.find(d=>d.id===id);
 const emoji = d => d.form==='soup'?'🍵': d.form==='side'?'🥗': d.moods.includes('noodle_rice')&&/うどん|そば|めん|麺|ラーメン|パスタ|ナポリタン|ペペロン|カルボ|ボンゴレ|ジェノ|パッタイ/.test(d.name)?(d.cuisine==='western'?'🍝':'🍜'): /鍋|チゲ|スンドゥブ|湯豆腐/.test(d.name)?'🍲': /カレー/.test(d.name)?'🍛': d.moods.includes('noodle_rice')?'🍚': d.tags.includes('fish')?'🐟': d.tags.includes('shrimp')?'🍤': d.tags.includes('chicken')?'🍗': d.tags.includes('pork')||d.tags.includes('beef')?'🥩': d.tags.includes('egg')?'🍳': '🥘';
 
 // ---- 候補選定(本体仕様 §4) ----
-function pool(mood, timeKey, extraExclude=[]) {
+function pool(mood, timeKey, extraExclude=[], ctx={}) {
   const cap = TIMES.find(t=>t[0]===timeKey)[2];
   const softToday = new Set(S.softNo.filter(x=>x.date===today()).map(x=>x.id));
   const soft30 = {}; S.softNo.forEach(x=>{ if(daysAgo(x.date)<=30) soft30[x.id]=(soft30[x.id]||0)+1 });
@@ -151,6 +162,8 @@ function pool(mood, timeKey, extraExclude=[]) {
       s += Math.min(2,(eatenCount[d.id]||0)*0.5);
       if (lastEaten[d.id]) { const a=daysAgo(lastEaten[d.id]); if(a<=7) s-=5; else if(a<=14) s-=2; }
       if (softToday.has(d.id)) s-=4;
+      if (ctx.passed && ctx.passed.includes(d.id)) s-=2;
+      if (ctx.champ && ctx.champ.id!==d.id && d.moods.some(m=>ctx.champ.moods.includes(m))) s+=2;
       s -= Math.min(1.5,(soft30[d.id]||0)*0.3);
       if (d.season.includes(sea)) s+=1;
       s += Math.random()*1.5;
@@ -158,19 +171,19 @@ function pool(mood, timeKey, extraExclude=[]) {
     }).sort((a,b)=>b.s-a.s).map(x=>x.d);
 }
 const relaxTime = k => k==='quick'?'normal':'any';
-function buildPool(sess){
-  sess.relax=0; let p=pool(sess.mood,sess.time,sess.shown);
-  if(p.length<3){ sess.relax=1; sess.time=relaxTime(sess.time); p=pool(sess.mood,sess.time,sess.shown); }
-  if(p.length<3){ sess.relax=2; sess.mood=null; p=pool(null,sess.time,sess.shown); }
+function buildPool(sess, need=3){
+  const ctx={passed:sess.passed, champ:sess.champ};
+  const ex=sess.champ?[...sess.shown, sess.champ.id]:sess.shown;
+  sess.relax=0; let p=pool(sess.mood,sess.time,ex,ctx);
+  if(p.length<need){ sess.relax=1; sess.time=relaxTime(sess.time); p=pool(sess.mood,sess.time,ex,ctx); }
+  if(p.length<need){ sess.relax=2; sess.mood=null; p=pool(null,sess.time,ex,ctx); }
+  if(p.length<need){ p=pool(sess.mood,sess.time,sess.passed.length?[]:ex,ctx); } // 見せた料理も再利用
   return p;
 }
 function pickDiverse(p,n){
-  const out=[];
-  for(const d of p){
-    if(out.length>=n) break;
-    if(out.every(o=>o.cuisine!==d.cuisine && o.form!==d.form)) out.push(d);
-  }
-  for(const d of p){ if(out.length>=n) break; if(!out.includes(d) && out.every(o=>o.cuisine!==d.cuisine)) out.push(d); }
+  const out=[]; const capC=Math.ceil(n/2), capF=Math.ceil(n*0.7);
+  const cnt=(k,v)=>out.filter(o=>o[k]===v).length;
+  for(const d of p){ if(out.length>=n) break; if(cnt('cuisine',d.cuisine)<capC && cnt('form',d.form)<capF) out.push(d); }
   for(const d of p){ if(out.length>=n) break; if(!out.includes(d)) out.push(d); }
   return out;
 }
@@ -200,35 +213,40 @@ const metaLine=d=>`<div class="meta"><span>約${d.time}分</span><span>手間 ${
 function render(){ app.innerHTML = VIEWS[view](); window.scrollTo(0,0); }
 function go(v){ view=v; render(); }
 function newSession(opts={}){
-  sess={ mood:null, time:S.stdTime, relax:0, shown:[], round:1, bothNo:0, redraws:2, startedAt:Date.now(), taps:0, tired:!!opts.tired, entry:opts.tired?'tired':'decide' };
+  sess={ mood:null, time:S.stdTime, relax:0, shown:[], passed:[], round:1, bothNo:0, redraws:2, champ:null, startedAt:Date.now(), taps:0, tired:!!opts.tired, entry:opts.tired?'tired':'decide' };
   S.stats.sessions++; save();
 }
-function startDuel(){
-  const p=buildPool(sess);
-  if(p.length<3){ return startOmakase('shortage'); }
-  const three=pickDiverse(p,3); sess.trio=three; sess.shown.push(...three.map(d=>d.id));
-  sess.round=1; sess.left=three[0]; sess.right=three[1]; sess.third=three[2]; go('duel');
+const GRID_N=10, MAX_ROUNDS=3;
+function startDuel(){ sess.round=1; sess.champ=null; nextGrid(); }
+function nextGrid(){
+  const need=sess.champ?GRID_N-1:GRID_N;
+  const p=buildPool(sess, 3);
+  if(p.length<3 && !sess.champ){ return startOmakase('shortage'); }
+  const fresh=pickDiverse(p, need);
+  sess.shown.push(...fresh.map(d=>d.id));
+  sess.grid=sess.champ?[sess.champ,...fresh]:fresh;
+  go('duel');
 }
-function pick(winnerId){
+function pick(id){
   sess.taps++;
-  const loser = sess.left.id===winnerId?sess.right:sess.left;
-  S.softNo.push({id:loser.id,date:today()}); save();
-  const w=byId(winnerId);
-  const cards=[...document.querySelectorAll('.duel .card')];
-  cards.forEach(c=>c.classList.add(c.dataset.id===winnerId?'win':'lose'));
+  const d=byId(id);
+  const cards=[...document.querySelectorAll('.gcard')];
+  cards.forEach(c=>c.classList.add(c.dataset.id===id?'picked':'dim'));
+  // 選ばれなかった料理は「見送り」(このセッション内でだけ −2)。嫌いではない
+  sess.grid.forEach(g=>{ if(g.id!==id && !sess.passed.includes(g.id)) sess.passed.push(g.id); });
+  const confirmChamp = sess.champ && sess.champ.id===id;
   setTimeout(()=>{
-    if(sess.round===1){ sess.round=2; sess.left=w; sess.right=sess.third; go('duel'); }
-    else { sess.decided=w; sess.method='duel'; go('decided'); }
-  },260);
+    if(confirmChamp || sess.round>=MAX_ROUNDS){ sess.decided=d; sess.method='grid'; go('decided'); return; }
+    sess.champ=d; sess.round++; nextGrid();
+  },220);
 }
 function bothNo(){
   sess.taps++; sess.bothNo++;
-  [sess.left,sess.right].forEach(d=>S.softNo.push({id:d.id,date:today()})); save();
+  sess.grid.forEach(g=>{ if(!sess.champ||g.id!==sess.champ.id) S.softNo.push({id:g.id,date:today()}); }); save();
   if(sess.bothNo>=3){ if(confirm('3回とも合いませんでした。おまかせで決めますか?')) return startOmakase('bothNo'); }
-  const p=buildPool(sess); if(p.length<2) return startOmakase('shortage');
-  const two=pickDiverse(p,2); sess.shown.push(...two.map(d=>d.id)); sess.left=two[0]; sess.right=two[1]; go('duel');
+  nextGrid();
 }
-function redraw(){ sess.taps++; S.softNo.push({id:sess.decided.id,date:today()}); save(); sess.redraws--; startDuel(); }
+function redraw(){ sess.taps++; S.softNo.push({id:sess.decided.id,date:today()}); save(); sess.redraws--; sess.champ=null; sess.round=1; nextGrid(); }
 function startOmakase(from){
   sess.taps++; sess.omakaseFrom=from;
   if(sess.tired){ sess.mood=null; sess.time='quick'; }
@@ -294,11 +312,12 @@ mood(){
   </div>`;
 },
 duel(){
-  const c=d=>`<button class="card" data-id="${d.id}" onclick="pick('${d.id}')">${tile(d)}<div class="cbody"><div class="cname">${esc(d.name)}</div>${metaLine(d)}</div></button>`;
-  return `<div class="screen">
-    <div class="top"><span><b>${sess.round}/2</b> どっち?</span><button onclick="bothNo()">どちらも違う</button></div>
+  const c=d=>`<button class="gcard ${sess.champ&&sess.champ.id===d.id?'champ':''}" data-id="${d.id}" onclick="pick('${d.id}')"><div class="gt tile c-${d.cuisine}" style="aspect-ratio:auto">${emoji(d)}</div><div class="gb"><div class="gn">${esc(d.name)}</div><div class="gm">約${d.time}分・${'⚡'.repeat(d.effort)}</div></div></button>`;
+  return `<div class="screen" style="gap:10px">
+    <div class="top"><span><b>${sess.round}/${MAX_ROUNDS}</b> 今日食べたいのは?</span><button onclick="bothNo()">どれも違う</button></div>
     ${sess.relax?`<div class="note">${sess.relax===1?'条件に合う料理が少ないので、時間を広げました':'条件に合う料理が少ないので、気分の条件を外しました'}</div>`:''}
-    <div class="duel">${c(sess.left)}<div class="vs">VS</div>${c(sess.right)}</div>
+    <div class="grid">${sess.grid.map(c).join('')}</div>
+    <div class="hint">${sess.champ?'「いまの候補」をもう一度タップで決定。ほかを選ぶと入れ替わります':'1つタップ。選ばなかった料理は今日の順位が少し下がるだけです'}</div>
   </div>`;
 },
 omakase(){
@@ -340,7 +359,7 @@ done(){
       <button class="btn secondary" onclick="recipe(${JSON.stringify(d).replace(/"/g,'&quot;')})">レシピを見る(検索を開く)</button>
       <button class="btn primary" onclick="eat()">食べた</button>
     </div>
-    <div class="proto">決めるまで ${sess.secs}秒・${sess.taps}タップ</div>
+    <div class="proto">決めるまで ${sess.secs}秒・${sess.taps}タップ・見た料理 ${sess.shown.length}件</div>
   </div>`;
 },
 week(){
