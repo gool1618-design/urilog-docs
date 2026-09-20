@@ -104,6 +104,16 @@ h2{font-size:20px;font-weight:700}
 .photo img{width:100%;height:100%;object-fit:cover}
 .photo input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
 .mine{display:flex;flex-direction:column;gap:8px}
+.field textarea{font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;min-height:80px;resize:vertical}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px;gap:2px}
+.seg button{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.seg button.hide[aria-pressed="true"]{background:var(--danger);color:#fff}
+.prefrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.prefrow .nm{flex:1;font-size:14px;font-weight:500;min-width:0}
+.prefrow .seg{flex-basis:100%;justify-content:space-between}
+.prefrow .em{font-size:22px;width:28px;text-align:center}
+a.btn{text-decoration:none}
 .final .card{text-align:left;width:100%}
 .note{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--ink)}
 .hero{position:relative}
@@ -149,6 +159,9 @@ const TIMES = [['quick','すぐ(〜15分)',15],['normal','ふつう(〜30分)',3
 const TAGS = {pork:'豚',chicken:'鶏',beef:'牛',fish:'魚',shrimp:'えび',egg:'卵',milk:'乳',wheat:'小麦',soy:'大豆(醤油)',tofu:'豆腐',mushroom:'きのこ',buckwheat:'そば',sesame:'ごま'};
 const CUI = {japanese:'和',western:'洋',chinese:'中',ethnic:'エスニック'};
 const WD = ['日','月','火','水','木','金','土'];
+const MY_FREE_LIMIT = 10;
+const SITES = {google:['Google','https://www.google.com/search?q={q}',' レシピ'], cookpad:['クックパッド','https://cookpad.com/search/{q}',''], kurashiru:['クラシル','https://www.kurashiru.com/search?query={q}',''], delish:['DELISH KITCHEN','https://delishkitchen.tv/search?q={q}',''], rakuten:['楽天レシピ','https://recipe.rakuten.co.jp/search/{q}/','']};
+const searchUrl = d => { const r=S.recipes[d.id]; if(r&&r.url) return r.url; const s=SITES[S.searchSite]||SITES.google; return s[1].replace('{q}', encodeURIComponent(d.name+s[2])); };
 
 // ---- 状態(端末内) ----
 const store = {
@@ -166,7 +179,11 @@ let S = {
   plan: store.get('plan', null),       // {start, days:[{date,id}]}
   last: store.get('last', null),       // {id,date}
   stats: store.get('stats', {sessions:0, decided:0, secs:[], taps:[], ok:0, ng:0, recipe:0}),
-  custom: store.get('custom', []),   // マイ料理 [{id,name,form,cuisine,moods,time,effort,cost,tags,season,tier,ing,photo}]
+  custom: store.get('custom', []),
+  pref: store.get('pref', {}),        // 出やすさ {dishId: 'more'|'less'}(出さないは hidden)
+  recipes: store.get('recipes', {}),  // 自分のレシピメモ {dishId:{memo,url}}
+  searchSite: store.get('searchSite','google'),
+  pro: store.get('pro', false),       // デモ用の Pro 切り替え   // マイ料理 [{id,name,form,cuisine,moods,time,effort,cost,tags,season,tier,ing,photo}]
   group: store.get('group', null),   // デモ用の家族 {members:[{name,me,proxy}], cook}
   gsess: store.get('gsess', null)    // その日の家族セッション {date, deck, answers:{name:{final,champs}}, status, decided}
 };
@@ -193,6 +210,7 @@ function pool(mood, timeKey, extraExclude=[], ctx={}) {
       let s = 0;
       if (mood && d.moods.includes(mood)) s+=3;
       if (S.fav.includes(d.id)) s+=2;
+      if (S.pref[d.id]==='more') s+=3; else if (S.pref[d.id]==='less') s-=3;
       s += Math.min(2,(eatenCount[d.id]||0)*0.5);
       if (lastEaten[d.id]) { const a=daysAgo(lastEaten[d.id]); if(a<=7) s-=5; else if(a<=14) s-=2; }
       if (softToday.has(d.id)) s-=4;
@@ -388,13 +406,14 @@ done(){
   const inShop=n=>S.shopping.some(x=>x.name===n&&x.dish===d.id);
   return `<div class="screen">
     <div class="top"><button class="back" onclick="go('home')">ホーム</button><button onclick="fav('${d.id}')">${S.fav.includes(d.id)?'♥ お気に入り':'♡ お気に入り'}</button></div>
-    <div class="card hero">${tile(d)}<div class="cbody"><div class="eyebrow">決まりました</div><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}</div></div>
+    <div class="card hero">${tile(d)}<div class="cbody"><div class="eyebrow">決まりました</div><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}<div class="row" style="margin-top:6px;justify-content:space-between"><span class="eyebrow" style="white-space:nowrap">出やすさ</span>${prefSeg(d.id)}</div></div></div>
     <div class="section"><div class="eyebrow">材料メモ(タップで買い物リストへ)</div><div class="chips">${d.ing.map(i=>`<button class="chip ing ${inShop(i)?'on':''}" onclick="toggleShop('${esc(i)}','${d.id}')">${inShop(i)?'✓ ':''}${esc(i)}</button>`).join('')}</div></div>
     ${(()=>{ const ps=sess.plus||(sess.plus=plusOne(d)); if(!ps.length) return ''; return `<div class="section"><div class="eyebrow">+1品あると(タップで材料メモに追加)</div><div class="plus">${ps.map(x=>{const on=x.ing.every(n=>S.shopping.some(sh=>sh.name===n&&sh.dish===x.id)); return `<button class="${on?'on':''}" onclick="togglePlus('${x.id}','${d.id}')"><span class="pe">${emoji(x)}</span><span class="pn">${esc(x.name)}<small>${x.form==='soup'?'汁物':'副菜'}・約${x.time}分</small></span></button>`}).join('')}</div></div>`; })()}
     ${sess.rated?'':`<div class="note row" style="justify-content:space-between"><span>決めた直後の納得は?(自己テスト用)</span><span class="row"><button class="chip" onclick="satisfy(true)">納得</button><button class="chip" onclick="satisfy(false)">いまいち</button></span></div>`}
     <div class="grow"></div>
+    ${(()=>{ const r=S.recipes[d.id]; if(sess.editRecipe) return `<div class="section"><div class="eyebrow">自分のレシピメモ</div><div class="field"><textarea id="rMemo" placeholder="例: 醤油大さじ2、みりん大さじ2。玉ねぎは先に炒める">${esc(r&&r.memo||'')}</textarea></div><div class="field"><input type="text" id="rUrl" value="${esc(r&&r.url||'')}" placeholder="参考にしたページのURL(任意)" inputmode="url"></div><div class="row"><button class="btn secondary" onclick="saveRecipe('${d.id}')">保存</button><button class="btn ghost" onclick="sess.editRecipe=false;render()">やめる</button></div></div>`; return `<div class="section"><div class="row" style="justify-content:space-between"><span class="eyebrow">自分のレシピメモ</span><button class="btn ghost" style="width:auto;min-height:0;font-size:13px" onclick="sess.editRecipe=true;render()">${r?'編集':'＋ 書く'}</button></div>${r?`<div class="note">${r.memo?esc(r.memo).replace(/\n/g,'<br>'):''}${r.url?`<div class="sub" style="margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🔗 ${esc(r.url)}</div>`:''}</div>`:''}</div>`; })()}
     <div class="stack">
-      <button class="btn secondary" onclick="recipe(${JSON.stringify(d).replace(/"/g,'&quot;')})">レシピを見る(検索を開く)</button>
+      <a class="btn secondary" href="${searchUrl(d)}" target="_blank" rel="noopener" onclick="S.stats.recipe++;save()">${S.recipes[d.id]&&S.recipes[d.id].url?'保存したレシピを開く':`「${esc(d.name)}」を${(SITES[S.searchSite]||SITES.google)[0]}で検索`}</a>
       <button class="btn primary" onclick="eat()">食べた</button>
     </div>
     <div class="proto">決めるまで ${sess.secs}秒・${sess.taps}タップ・見た料理 ${sess.shown.length}件</div>
@@ -452,7 +471,7 @@ final(){
 mine(){
   return `<div class="screen">
     <div class="top"><button class="back" onclick="go('settings')">戻る</button><button onclick="newDraft()">＋ 追加</button></div>
-    <div><h1>マイ料理</h1><div class="sub">写真と名前と時間だけで登録できます。候補として同じように出ます</div></div>
+    <div><h1>マイ料理</h1><div class="sub">写真と名前と時間だけで登録できます。候補として同じように出ます。${S.pro?'Pro: 無制限':`無料: ${S.custom.length}/${MY_FREE_LIMIT}件`}</div></div>
     ${S.custom.length?`<div class="mine">${S.custom.map(d=>`<div class="day"><div class="em tile c-japanese" style="aspect-ratio:auto;overflow:hidden">${emoji(d)}</div><div class="nm">${esc(d.name)}<small>約${d.time}分・${d.form==='one_dish'?'1品完結':'主菜'}${d.ing.length?'・'+d.ing.slice(0,3).join('、'):''}</small></div><button onclick="removeCustom('${d.id}')">削除</button></div>`).join('')}</div>`:'<div class="note">まだありません。「＋ 追加」から、家の定番や、ここにない料理を登録してください</div>'}
     <div class="grow"></div>
     <button class="btn primary" onclick="newDraft()">料理を登録する</button>
@@ -471,6 +490,16 @@ mine_edit(){
     <div class="field"><label for="dishIng">主な材料(任意、読点区切り)</label><input type="text" id="dishIng" value="${esc(draft.ing)}" placeholder="例: 鶏もも肉、にんにく、片栗粉" oninput="draft.ing=this.value"></div>
     <div class="grow"></div>
     <button class="btn primary" onclick="saveDraft()">登録する</button>
+  </div>`;
+},
+prefs(){
+  const q=prefQuery.trim(); const list=ALL().filter(d=>(d.form==='one_dish'||d.form==='main')&&(!q||d.name.includes(q))).sort((a,b)=>{const o={more:0,normal:1,less:2,hide:3}; return o[prefOf(a.id)]-o[prefOf(b.id)]||a.name.localeCompare(b.name,'ja')});
+  const counts={more:0,less:0,hide:0}; ALL().forEach(d=>{const p=prefOf(d.id); if(counts[p]!==undefined) counts[p]++});
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('settings')">戻る</button><span>よく出す ${counts.more}・たまに ${counts.less}・出さない ${counts.hide}</span></div>
+    <div><h1>好みの調整</h1><div class="sub">料理ごとに出やすさを変えられます。「出さない」は候補から消えます</div></div>
+    <div class="field"><input type="text" id="prefSearch" value="${esc(prefQuery)}" placeholder="料理名で絞る" oninput="prefQuery=this.value;render();document.getElementById('prefSearch').focus()"></div>
+    <div>${list.slice(0,60).map(d=>`<div class="prefrow"><span class="em">${d.photo?'📷':emoji(d)}</span><span class="nm">${esc(d.name)}</span>${prefSeg(d.id)}</div>`).join('')}${list.length>60?`<div class="sub" style="padding:8px 0">ほか ${list.length-60} 件。料理名で絞ってください</div>`:''}</div>
   </div>`;
 },
 shopping(){
@@ -501,7 +530,9 @@ settings(){
     <div class="section"><div class="eyebrow">標準の時間</div><div class="chips">${TIMES.map(([k,l])=>`<button class="chip" aria-pressed="${S.stdTime===k}" onclick="S.stdTime='${k}';save();render()">${l}</button>`).join('')}</div></div>
     <div class="section"><div class="eyebrow">苦手・食べられない食材(候補から外す)</div><div class="chips">${Object.entries(TAGS).map(([k,l])=>`<button class="chip" aria-pressed="${S.exclude.includes(k)}" onclick="const i=S.exclude.indexOf('${k}');i>=0?S.exclude.splice(i,1):S.exclude.push('${k}');save();render()">${l}</button>`).join('')}</div>${S.exclude.includes('soy')?'<div class="note">大豆(醤油)を外すと候補が大幅に減ります</div>':''}</div>
     ${S.hidden.length?`<div class="section"><div class="eyebrow">出さない料理</div><div class="chips">${S.hidden.map(id=>`<button class="chip" onclick="S.hidden=S.hidden.filter(x=>x!=='${id}');save();render()">✕ ${esc(byId(id).name)}</button>`).join('')}</div></div>`:''}
-    <div class="section"><div class="eyebrow">マイ料理</div><button class="btn secondary" onclick="go('mine')">自分の料理を登録・編集(${S.custom.length}件)</button></div>
+    <div class="section"><div class="eyebrow">料理のカスタマイズ</div><div class="stack"><button class="btn secondary" onclick="go('mine')">マイ料理を登録・編集(${S.pro?`${S.custom.length}件`:`${S.custom.length}/${MY_FREE_LIMIT}件`})</button><button class="btn secondary" onclick="prefQuery='';go('prefs')">好みの調整(出やすさ)</button></div></div>
+    <div class="section"><div class="eyebrow">レシピの検索先</div><div class="chips">${Object.entries(SITES).map(([k,v])=>`<button class="chip" aria-pressed="${S.searchSite===k}" onclick="S.searchSite='${k}';save();render()">${v[0]}</button>`).join('')}</div><div class="sub">「レシピを見る」を押すと、料理名を入れた状態でこのサイトの検索が開きます</div></div>
+    <div class="section"><div class="eyebrow">Pro(デモ)</div><div class="chips"><button class="chip" aria-pressed="${S.pro}" onclick="S.pro=!S.pro;save();render()">${S.pro?'Pro オン':'無料'}</button></div><div class="sub">無料: マイ料理${MY_FREE_LIMIT}件まで。Pro: 無制限、家族モード、料理全件</div></div>
     <div class="section"><div class="eyebrow">家族モード(デモ)</div><div class="chips"><button class="chip" aria-pressed="${!!S.group}" onclick="enableDemoGroup(${!S.group})">${S.group?'オン(パパ・はるちゃんと共有中)':'オフ'}</button></div><div class="sub">本物はサーバー(Supabase)で同期します。ここでは偽のメンバーが端末内で動きます</div></div>
     <div class="section"><div class="eyebrow">自己テストの記録</div><div class="stat"><div><b>${median(st.secs)}<small>秒</small></b><span>決定までの中央値</span></div><div><b>${median(st.taps)}</b><span>タップ数の中央値</span></div><div><b>${rated?Math.round(st.ok/rated*100)+'%':'–'}</b><span>納得率(${rated}回)</span></div></div>
     <div class="stat"><div><b>${st.sessions}</b><span>開始</span></div><div><b>${st.decided}</b><span>決定</span></div><div><b>${st.recipe}</b><span>レシピを見た</span></div></div></div>
@@ -561,7 +592,7 @@ function togglePlus(id,mainId){
 }
 // ===== マイ料理 =====
 let draft=null;
-function newDraft(){ draft={name:'',time:20,form:'main',moods:[],ing:'',photo:null}; go('mine_edit'); }
+function newDraft(){ if(!S.pro && S.custom.length>=MY_FREE_LIMIT){ toast(`無料では${MY_FREE_LIMIT}件まで。Pro で無制限になります`); return; } draft={name:'',time:20,form:'main',moods:[],ing:'',photo:null}; go('mine_edit'); }
 function saveDraft(){
   if(!draft.name.trim()) return toast('料理名を入れてください');
   const d={id:'my_'+Date.now(), name:draft.name.trim(), form:draft.form, cuisine:'japanese', moods:draft.moods, time:draft.time, effort:draft.time<=15?1:draft.time<=30?2:3, cost:2, tags:[], season:['all'], tier:'free', ing:draft.ing.split(/[、,\s]+/).filter(Boolean).slice(0,6), photo:draft.photo, mine:true};
@@ -574,13 +605,19 @@ function onPhoto(input){
   img.onload=()=>{ const W=640, r=Math.min(1,W/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*r); c.height=Math.round(img.height*r); c.getContext('2d').drawImage(img,0,0,c.width,c.height); draft.photo=c.toDataURL('image/jpeg',.8); URL.revokeObjectURL(url); render(); };
   img.src=url;
 }
+// ===== 出やすさ(手動の重み)と 自分のレシピメモ =====
+function setPref(id,v){ if(v==='hide'){ if(!S.hidden.includes(id)) S.hidden.push(id); delete S.pref[id]; } else { S.hidden=S.hidden.filter(x=>x!==id); if(v==='normal') delete S.pref[id]; else S.pref[id]=v; } save(); render(); }
+function prefOf(id){ return S.hidden.includes(id)?'hide':(S.pref[id]||'normal'); }
+function prefSeg(id){ const cur=prefOf(id); return `<span class="seg">${[['more','よく出す'],['normal','ふつう'],['less','たまに'],['hide','出さない']].map(([k,l])=>`<button class="${k==='hide'?'hide':''}" aria-pressed="${cur===k}" onclick="setPref('${id}','${k}')">${l}</button>`).join('')}</span>`; }
+function saveRecipe(id){ const memo=document.getElementById('rMemo').value.trim(), url=document.getElementById('rUrl').value.trim(); if(memo||url) S.recipes[id]={memo,url}; else delete S.recipes[id]; save(); toast('レシピメモを保存しました'); sess.editRecipe=false; render(); }
+let prefQuery='';
 function reroll(i){ const w=sess.week; const used=w.days.map(x=>x.id); const dt=new Date(w.days[i].date); const wd=dt.getDay(); const timeKey=(wd===0||wd===6)?'any':S.stdTime;
   const prev=w.days[i-1]?byId(w.days[i-1].id):null, next=w.days[i+1]?byId(w.days[i+1].id):null;
   let p=pool(null,timeKey,used).filter(d=>(!prev||(d.cuisine!==prev.cuisine&&mainProtein(d)!==mainProtein(prev)))&&(!next||(d.cuisine!==next.cuisine&&mainProtein(d)!==mainProtein(next))));
   if(!p.length) p=pool(null,timeKey,used); if(!p.length) return toast('候補がありません');
   w.days[i].id=p[0].id; render(); }
 function planGo(id){ newSession(); sess.decided=byId(id); sess.method='plan'; sess.redraws=0; sess.taps=1; go('decided'); }
-window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.enableDemoGroup=enableDemoGroup; window.nudge=nudge; window.proxyAnswer=proxyAnswer; window.finalPick=finalPick; window.submitAnswer=submitAnswer; window.togglePlus=togglePlus; window.newDraft=newDraft; window.saveDraft=saveDraft; window.removeCustom=removeCustom; window.onPhoto=onPhoto; Object.defineProperty(window,'draft',{get:()=>draft,set:v=>{draft=v}}); window.render=render; window.S=S; window.sess=sess;
+window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.enableDemoGroup=enableDemoGroup; window.nudge=nudge; window.proxyAnswer=proxyAnswer; window.finalPick=finalPick; window.submitAnswer=submitAnswer; window.togglePlus=togglePlus; window.setPref=setPref; window.saveRecipe=saveRecipe; Object.defineProperty(window,'prefQuery',{get:()=>prefQuery,set:v=>{prefQuery=v}}); window.newDraft=newDraft; window.saveDraft=saveDraft; window.removeCustom=removeCustom; window.onPhoto=onPhoto; Object.defineProperty(window,'draft',{get:()=>draft,set:v=>{draft=v}}); window.render=render; window.S=S; window.sess=sess;
 Object.defineProperty(window,'sess',{get:()=>sess,set:v=>{sess=v}});
 render();
 </script>
