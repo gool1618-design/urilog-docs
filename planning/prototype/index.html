@@ -1,4 +1,4 @@
-<title>今日はこれ</title>
+<title>ピクモグ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
 <style>
@@ -337,8 +337,8 @@ home(){
   const last=S.last&&byId(S.last.id);
   const unchecked=S.shopping.filter(x=>!x.checked).length;
   return `<div class="screen">
-    <div class="top"><span class="eyebrow">献立決定アプリ(仮) プロトタイプ</span><button onclick="go('settings')">設定</button></div>
-    <div><h1>今日なに食べる?</h1><div class="sub">${new Date().getMonth()+1}月${new Date().getDate()}日(${WD[new Date().getDay()]})</div></div>
+    <div class="top"><span class="eyebrow">ピクモグ プロトタイプ</span><button onclick="go('settings')">設定</button></div>
+    <div><h1>今日の献立をピックに</h1><div class="sub">${new Date().getMonth()+1}月${new Date().getDate()}日(${WD[new Date().getDay()]})</div></div>
     ${todayPlan?`<button class="card home-card" onclick="planGo('${todayPlan.id}')" style="padding:12px"><div class="em">${emoji(byId(todayPlan.id))}</div><div style="flex:1"><div class="eyebrow">今日の予定</div><div class="cname">${esc(byId(todayPlan.id).name)}</div><div class="sub">これでいく → タップ。変えたいなら下から決め直す</div></div></button>`:
       last?`<div class="card home-card" style="padding:12px"><div class="em">${emoji(last)}</div><div><div class="eyebrow">${S.last.date===today()?'今日決めた料理':'前回'}</div><div class="cname">${esc(last.name)}</div></div></div>`:''}
     ${S.group?groupCard():''}
