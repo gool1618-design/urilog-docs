@@ -75,6 +75,21 @@ h2{font-size:20px;font-weight:700}
 .gcard.picked{transform:scale(1.04);box-shadow:0 0 0 3px var(--hi)}
 .gcard.dim{opacity:.35}
 .hint{font-size:13px;color:var(--muted);text-align:center}
+.members{display:flex;flex-direction:column;gap:6px}
+.member{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.member .av{width:32px;height:32px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.member .nm{flex:1;font-weight:500}
+.member .nm small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.member .st{font-size:12px;color:var(--muted)}
+.member .st.ok{color:var(--accent);font-weight:700}
+.member button{font-size:12px;font-weight:600;color:var(--accent);background:var(--soft);padding:6px 10px;border-radius:8px}
+.wish{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.wish .em{font-size:30px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:10px}
+.wish .who{font-size:12px;color:var(--muted)}
+.wish .nm{font-weight:700}
+.wish .pt{margin-left:auto;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.final{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.final .card{text-align:left;width:100%}
 .note{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--ink)}
 .hero{position:relative}
 .hero .tile{font-size:96px}
@@ -135,7 +150,9 @@ let S = {
   shopping: store.get('shopping', []), // [{name,dish,checked}]
   plan: store.get('plan', null),       // {start, days:[{date,id}]}
   last: store.get('last', null),       // {id,date}
-  stats: store.get('stats', {sessions:0, decided:0, secs:[], taps:[], ok:0, ng:0, recipe:0})
+  stats: store.get('stats', {sessions:0, decided:0, secs:[], taps:[], ok:0, ng:0, recipe:0}),
+  group: store.get('group', null),   // デモ用の家族 {members:[{name,me,proxy}], cook}
+  gsess: store.get('gsess', null)    // その日の家族セッション {date, deck, answers:{name:{final,champs}}, status, decided}
 };
 const save = ()=>{ for (const k in S) store.set(k, S[k]) };
 const today = ()=> new Date().toISOString().slice(0,10);
@@ -237,7 +254,7 @@ function pick(id){
   const confirmChamp = sess.champ && sess.champ.id===id;
   setTimeout(()=>{
     if(confirmChamp || sess.round>=MAX_ROUNDS){ sess.decided=d; sess.method='grid'; go('decided'); return; }
-    sess.champ=d; sess.round++; nextGrid();
+    (sess.champs=sess.champs||[]).push(d.id); sess.champ=d; sess.round++; nextGrid();
   },220);
 }
 function bothNo(){
@@ -260,6 +277,7 @@ function startOmakase(from){
 }
 function confirmDecision(){
   sess.taps++;
+  if(S.group && sess.method!=='plan' && sess.method!=='final'){ return submitAnswer(); }
   const d=sess.decided; S.last={id:d.id,date:today()};
   const secs=Math.round((Date.now()-sess.startedAt)/1000);
   S.stats.decided++; S.stats.secs.push(secs); S.stats.taps.push(sess.taps); save();
@@ -287,9 +305,10 @@ home(){
     <div><h1>今日なに食べる?</h1><div class="sub">${new Date().getMonth()+1}月${new Date().getDate()}日(${WD[new Date().getDay()]})</div></div>
     ${todayPlan?`<button class="card home-card" onclick="planGo('${todayPlan.id}')" style="padding:12px"><div class="em">${emoji(byId(todayPlan.id))}</div><div style="flex:1"><div class="eyebrow">今日の予定</div><div class="cname">${esc(byId(todayPlan.id).name)}</div><div class="sub">これでいく → タップ。変えたいなら下から決め直す</div></div></button>`:
       last?`<div class="card home-card" style="padding:12px"><div class="em">${emoji(last)}</div><div><div class="eyebrow">${S.last.date===today()?'今日決めた料理':'前回'}</div><div class="cname">${esc(last.name)}</div></div></div>`:''}
+    ${S.group?groupCard():''}
     <div class="grow"></div>
     <div class="stack">
-      <button class="btn primary big" onclick="newSession();go('mood')">今日の献立を決める</button>
+      <button class="btn primary big" onclick="newSession();go('mood')">${S.group&&!(S.gsess&&S.gsess.date===today()&&S.gsess.answers['わたし'])?'今日の希望を選ぶ':'今日の献立を決める'}</button>
       <button class="btn secondary" onclick="newSession({tired:true});startOmakase('tired')">疲れた日(おまかせで即決)</button>
       <button class="btn secondary" onclick="go('week')">1週間ぶん作る</button>
       <div class="row" style="justify-content:space-between;padding:4px 4px 0">
@@ -374,6 +393,43 @@ week(){
     <div class="proto">材料名は週の買い物リストにまとまります</div>
   </div>`;
 },
+waiting(){
+  const g=ensureGsess(); const m=S.group.members; const answered=m.filter(x=>g.answers[x.name]).length;
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('home')">ホーム</button><span>${answered}/${m.length} 人が選択済み</span></div>
+    <div><h1>${answered===m.length?'全員そろいました':'家族の選択を待っています'}</h1><div class="sub">締め切り 18:00。そろわなくても作る人が決められます</div></div>
+    ${memberList()}
+    <div class="grow"></div>
+    <div class="stack">
+      ${g.answers['わたし']?`<button class="btn secondary" onclick="go('wishes')">みんなの希望を見る</button>`:''}
+      ${S.group.cook==='わたし'?`<button class="btn primary" onclick="go('final')">${answered===m.length?'作る人として決める':'今そろっている希望で決める'}</button>`:''}
+    </div>
+    <div class="proto">デモ: メンバーは偽物です。催促すると3秒後に答えます</div>
+  </div>`;
+},
+wishes(){
+  const g=ensureGsess(); const t=tally();
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('waiting')">戻る</button><span></span></div>
+    <div><h1>みんなの希望</h1><div class="sub">自分が選んだあとだけ見られます。他の人の選択に引っ張られないため</div></div>
+    <div class="section"><div class="eyebrow">それぞれの1番</div><div class="stack">${S.group.members.map(x=>{const a=g.answers[x.name]; if(!a) return `<div class="wish"><div class="av">${esc(x.name[0])}</div><div><div class="who">${esc(x.name)}</div><div class="nm" style="color:var(--muted)">まだ選んでいません</div></div><button class="chip" style="margin-left:auto" onclick="${x.proxy?`proxyAnswer('${x.name}')`:`nudge('${x.name}')`}">${x.proxy?'代わりに選ぶ':'催促する'}</button></div>`; const d=byId(a.final); return `<div class="wish"><div class="em tile c-${d.cuisine}" style="aspect-ratio:auto">${emoji(d)}</div><div><div class="who">${esc(x.name)}${a.champs.length?` (途中で候補: ${a.champs.map(id=>byId(id).name).join('、')})`:''}</div><div class="nm">${esc(d.name)}</div></div></div>`}).join('')}</div></div>
+    ${t.length?`<div class="section"><div class="eyebrow">合計点(最終の希望3点、途中の候補1点)</div><div class="stack">${t.slice(0,4).map(x=>`<div class="wish"><div class="em">${emoji(x.d)}</div><div class="nm">${esc(x.d.name)}</div><div class="pt">${x.p}点</div></div>`).join('')}</div></div>`:''}
+    <div class="grow"></div>
+    ${S.group.cook==='わたし'?`<button class="btn primary" onclick="go('final')">作る人として決める</button>`:'<div class="hint">決めるのは作る人(わたし以外)です</div>'}
+  </div>`;
+},
+final(){
+  const t=tally(); const top=t.slice(0,2);
+  if(!top.length) return `<div class="screen"><div class="top"><button class="back" onclick="go('waiting')">戻る</button></div><h1>まだ希望がありません</h1><div class="sub">誰かが選ぶか、催促してください</div><div class="grow"></div><button class="btn primary" onclick="newSession();go('mood')">ひとりで決める</button></div>`;
+  const c=x=>`<button class="card" onclick="finalPick('${x.d.id}')">${tile(x.d)}<div class="cbody"><div class="cname">${esc(x.d.name)}</div>${metaLine(x.d)}<div class="sub">${x.p}点</div></div></button>`;
+  return `<div class="screen">
+    <div class="top"><button class="back" onclick="go('waiting')">戻る</button><span>作る人の最終決定</span></div>
+    <div><h1>${top.length>1?'上位2品、どっち?':'今日はこれで'}</h1><div class="sub">家族の合計点の上位。作る人が決めます</div></div>
+    <div class="final">${top.map(c).join('')}</div>
+    <div class="grow"></div>
+    ${top.length>1?`<div class="row" style="justify-content:center;gap:16px"><button class="btn ghost" style="width:auto" onclick="finalPick('${top[Math.random()<0.5?0:1].d.id}')">コイントス</button><button class="btn ghost" style="width:auto" onclick="startOmakase('family')">おまかせ</button></div>`:''}
+  </div>`;
+},
 shopping(){
   const groups={}; S.shopping.forEach(x=>{ (groups[x.name]=groups[x.name]||[]).push(x) });
   const names=Object.keys(groups).sort((a,b)=>(groups[a].every(x=>x.checked)?1:0)-(groups[b].every(x=>x.checked)?1:0));
@@ -402,6 +458,7 @@ settings(){
     <div class="section"><div class="eyebrow">標準の時間</div><div class="chips">${TIMES.map(([k,l])=>`<button class="chip" aria-pressed="${S.stdTime===k}" onclick="S.stdTime='${k}';save();render()">${l}</button>`).join('')}</div></div>
     <div class="section"><div class="eyebrow">苦手・食べられない食材(候補から外す)</div><div class="chips">${Object.entries(TAGS).map(([k,l])=>`<button class="chip" aria-pressed="${S.exclude.includes(k)}" onclick="const i=S.exclude.indexOf('${k}');i>=0?S.exclude.splice(i,1):S.exclude.push('${k}');save();render()">${l}</button>`).join('')}</div>${S.exclude.includes('soy')?'<div class="note">大豆(醤油)を外すと候補が大幅に減ります</div>':''}</div>
     ${S.hidden.length?`<div class="section"><div class="eyebrow">出さない料理</div><div class="chips">${S.hidden.map(id=>`<button class="chip" onclick="S.hidden=S.hidden.filter(x=>x!=='${id}');save();render()">✕ ${esc(byId(id).name)}</button>`).join('')}</div></div>`:''}
+    <div class="section"><div class="eyebrow">家族モード(デモ)</div><div class="chips"><button class="chip" aria-pressed="${!!S.group}" onclick="enableDemoGroup(${!S.group})">${S.group?'オン(パパ・はるちゃんと共有中)':'オフ'}</button></div><div class="sub">本物はサーバー(Supabase)で同期します。ここでは偽のメンバーが端末内で動きます</div></div>
     <div class="section"><div class="eyebrow">自己テストの記録</div><div class="stat"><div><b>${median(st.secs)}<small>秒</small></b><span>決定までの中央値</span></div><div><b>${median(st.taps)}</b><span>タップ数の中央値</span></div><div><b>${rated?Math.round(st.ok/rated*100)+'%':'–'}</b><span>納得率(${rated}回)</span></div></div>
     <div class="stat"><div><b>${st.sessions}</b><span>開始</span></div><div><b>${st.decided}</b><span>決定</span></div><div><b>${st.recipe}</b><span>レシピを見た</span></div></div></div>
     <div class="grow"></div>
@@ -409,13 +466,43 @@ settings(){
   </div>`;
 }
 };
+// ===== 家族モード(デモ: 端末内で偽メンバーを動かす) =====
+const DEMO_MEMBERS=[{name:'わたし',me:true},{name:'パパ'},{name:'はるちゃん',proxy:true}];
+function enableDemoGroup(on){ S.group=on?{members:DEMO_MEMBERS,cook:'わたし'}:null; S.gsess=null; save(); render(); }
+function ensureGsess(){ if(!S.gsess||S.gsess.date!==today()){ S.gsess={date:today(),deck:[],answers:{},status:'collecting',decided:null}; save(); } return S.gsess; }
+function submitAnswer(){
+  const g=ensureGsess(); const who=sess.proxyFor||'わたし';
+  if(!g.deck.length) g.deck=[...new Set([...sess.shown, sess.decided.id])];
+  g.answers[who]={final:sess.decided.id, champs:(sess.champs||[]).filter(id=>id!==sess.decided.id)};
+  save(); toast(who==='わたし'?'あなたの希望を送りました':`${who}の希望を代理で送りました`); go('waiting');
+}
+function nudge(name){
+  toast(`${name}に「今日の希望を選んでね」と通知しました(デモ: 3秒後に答えます)`);
+  setTimeout(()=>{ const g=ensureGsess(); if(g.answers[name]) return; const cands=(g.deck.length?g.deck.map(byId):pool(null,'any').slice(0,10)); const pickd=cands[Math.floor(Math.random()*Math.min(cands.length,10))]; const ch=cands.filter(d=>d.id!==pickd.id).slice(0,1).map(d=>d.id); g.answers[name]={final:pickd.id,champs:ch}; save(); toast(`${name}が選びました`); if(view==='waiting'||view==='home'||view==='wishes') render(); },3000);
+}
+function proxyAnswer(name){ newSession(); sess.proxyFor=name; sess.champs=[]; go('mood'); }
+function tally(){
+  const g=ensureGsess(); const pts={};
+  Object.values(g.answers).forEach(a=>{ pts[a.final]=(pts[a.final]||0)+3; a.champs.forEach(id=>pts[id]=(pts[id]||0)+1); });
+  return Object.entries(pts).sort((a,b)=>b[1]-a[1]).map(([id,p])=>({d:byId(id),p}));
+}
+function finalPick(id){ const g=ensureGsess(); g.status='decided'; g.decided=id; save(); newSession(); sess.decided=byId(id); sess.method='final'; sess.taps=1; S.last={id,date:today()}; save(); go('done'); }
+function memberList(){
+  const g=ensureGsess();
+  return `<div class="members">${S.group.members.map(x=>{const a=g.answers[x.name]; return `<div class="member"><div class="av">${esc(x.name[0])}</div><div class="nm">${esc(x.name)}${x.me?' (あなた)':''}${S.group.cook===x.name?' ・作る人':''}<small>${x.proxy?'端末なし・代理で回答':'端末あり'}</small></div>${a?`<span class="st ok">✓ 選択済み</span>`:(x.me?`<button onclick="newSession();go('mood')">選ぶ</button>`:x.proxy?`<button onclick="proxyAnswer('${x.name}')">代わりに選ぶ</button>`:`<button onclick="nudge('${x.name}')">催促する</button>`)}</div>`}).join('')}</div>`;
+}
+function groupCard(){
+  const g=ensureGsess(); const m=S.group.members; const answered=m.filter(x=>g.answers[x.name]).length;
+  if(g.status==='decided'){ const d=byId(g.decided); return `<div class="card home-card" style="padding:12px"><div class="em">${emoji(d)}</div><div style="flex:1"><div class="eyebrow">家族で決まった料理</div><div class="cname">${esc(d.name)}</div></div></div>`; }
+  return `<div class="card" style="padding:12px"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="eyebrow">家族の今日 ${answered}/${m.length}</span><button class="btn ghost" style="width:auto;min-height:0;font-size:13px" onclick="go('waiting')">状況を見る ›</button></div>${memberList()}</div>`;
+}
 function reroll(i){ const w=sess.week; const used=w.days.map(x=>x.id); const dt=new Date(w.days[i].date); const wd=dt.getDay(); const timeKey=(wd===0||wd===6)?'any':S.stdTime;
   const prev=w.days[i-1]?byId(w.days[i-1].id):null, next=w.days[i+1]?byId(w.days[i+1].id):null;
   let p=pool(null,timeKey,used).filter(d=>(!prev||(d.cuisine!==prev.cuisine&&mainProtein(d)!==mainProtein(prev)))&&(!next||(d.cuisine!==next.cuisine&&mainProtein(d)!==mainProtein(next))));
   if(!p.length) p=pool(null,timeKey,used); if(!p.length) return toast('候補がありません');
   w.days[i].id=p[0].id; render(); }
 function planGo(id){ newSession(); sess.decided=byId(id); sess.method='plan'; sess.redraws=0; sess.taps=1; go('decided'); }
-window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.render=render; window.S=S; window.sess=sess;
+window.go=go; window.pick=pick; window.bothNo=bothNo; window.redraw=redraw; window.startOmakase=startOmakase; window.confirmDecision=confirmDecision; window.toggleShop=toggleShop; window.eat=eat; window.fav=fav; window.hide=hide; window.recipe=recipe; window.satisfy=satisfy; window.newSession=newSession; window.startDuel=startDuel; window.reroll=reroll; window.planGo=planGo; window.enableDemoGroup=enableDemoGroup; window.nudge=nudge; window.proxyAnswer=proxyAnswer; window.finalPick=finalPick; window.submitAnswer=submitAnswer; window.render=render; window.S=S; window.sess=sess;
 Object.defineProperty(window,'sess',{get:()=>sess,set:v=>{sess=v}});
 render();
 </script>
