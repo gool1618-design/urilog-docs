@@ -506,3 +506,4 @@ v1.0の実行時AI利用はゼロ。
 | `generate_dish_list.py` | CSV からリスト文書を生成するスクリプト |
 | `meal-decision-prototype-spec.md` | 決定フローのプロトタイプ仕様と自己テストの合格条件 |
 | `meal-decision-supabase-schema.md` | グループ機能の Supabase テーブル設計、RLS、集計関数、通知 |
+| `meal-decision-build-plan.md` | 実装計画 v1.0(ファイル構成、マイルストーン、設計上の決めごと) |

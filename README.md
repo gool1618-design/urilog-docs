@@ -26,3 +26,4 @@ GitHub Pages で公開しています。
 - [ピクモグ 料理データ リスト設計(150件)](planning/meal-decision-dish-list.md)(元表: `planning/meal-decision-dishes.csv`、検証: `planning/check_dish_coverage.py`、生成: `planning/generate_dish_list.py`)
 - [ピクモグ プロトタイプ仕様](planning/meal-decision-prototype-spec.md)
 - [ピクモグ Supabase テーブル設計](planning/meal-decision-supabase-schema.md)
+- [ピクモグ 実装計画 v1.0](planning/meal-decision-build-plan.md)
