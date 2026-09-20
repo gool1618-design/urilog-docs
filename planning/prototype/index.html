@@ -109,6 +109,7 @@ h2{font-size:20px;font-weight:700}
 .seg button{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
 .seg button.hide[aria-pressed="true"]{background:var(--danger);color:#fff}
+.seg button.like[aria-pressed="true"]{background:var(--hi);color:var(--hi-ink)}
 .prefrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
 .prefrow .nm{flex:1;font-size:14px;font-weight:500;min-width:0}
 .prefrow .seg{flex-basis:100%;justify-content:space-between}
@@ -188,6 +189,7 @@ let S = {
   gsess: store.get('gsess', null)    // その日の家族セッション {date, deck, answers:{name:{final,champs}}, status, decided}
 };
 const save = ()=>{ for (const k in S) store.set(k, S[k]) };
+(function migrate(){ let ch=false; for(const k in S.pref){ if(S.pref[k]==='more'){S.pref[k]='like';ch=true} if(S.pref[k]==='less'){S.pref[k]='dislike';ch=true} } if(S.fav.length){ S.fav.forEach(id=>{ if(!S.pref[id]) S.pref[id]='like' }); S.fav=[]; ch=true } if(ch) save(); })();
 const today = ()=> new Date().toISOString().slice(0,10);
 const daysAgo = d => Math.round((Date.now()-new Date(d))/86400000);
 const season = ()=>{ const m=new Date().getMonth()+1; return m<=2||m===12?'winter':m<=5?'spring':m<=8?'summer':'autumn' };
@@ -209,8 +211,7 @@ function pool(mood, timeKey, extraExclude=[], ctx={}) {
     .map(d=>{
       let s = 0;
       if (mood && d.moods.includes(mood)) s+=3;
-      if (S.fav.includes(d.id)) s+=2;
-      if (S.pref[d.id]==='more') s+=3; else if (S.pref[d.id]==='less') s-=3;
+      if (S.pref[d.id]==='like') s+=4; else if (S.pref[d.id]==='dislike') s-=6;
       s += Math.min(2,(eatenCount[d.id]||0)*0.5);
       if (lastEaten[d.id]) { const a=daysAgo(lastEaten[d.id]); if(a<=7) s-=5; else if(a<=14) s-=2; }
       if (softToday.has(d.id)) s-=4;
@@ -348,7 +349,7 @@ home(){
       <button class="btn secondary" onclick="go('week')">1週間ぶん作る</button>
       <div class="row" style="justify-content:space-between;padding:4px 4px 0">
         <button class="btn ghost" style="width:auto" onclick="go('shopping')">買い物リスト ${unchecked?`<span class="badge">${unchecked}</span>`:''}</button>
-        <button class="btn ghost" style="width:auto" onclick="go('history')">履歴・お気に入り</button>
+        <button class="btn ghost" style="width:auto" onclick="go('history')">履歴・好きな料理</button>
         <button class="btn ghost" style="width:auto" onclick="go('mine')">マイ料理</button>
       </div>
     </div>
@@ -405,8 +406,8 @@ done(){
   const d=sess.decided;
   const inShop=n=>S.shopping.some(x=>x.name===n&&x.dish===d.id);
   return `<div class="screen">
-    <div class="top"><button class="back" onclick="go('home')">ホーム</button><button onclick="fav('${d.id}')">${S.fav.includes(d.id)?'♥ お気に入り':'♡ お気に入り'}</button></div>
-    <div class="card hero">${tile(d)}<div class="cbody"><div class="eyebrow">決まりました</div><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}<div class="row" style="margin-top:6px;justify-content:space-between"><span class="eyebrow" style="white-space:nowrap">出やすさ</span>${prefSeg(d.id)}</div></div></div>
+    <div class="top"><button class="back" onclick="go('home')">ホーム</button><span></span></div>
+    <div class="card hero">${tile(d)}<div class="cbody"><div class="eyebrow">決まりました</div><div class="decided-name">${esc(d.name)}</div>${metaLine(d)}<div class="row" style="margin-top:6px;justify-content:space-between"><span class="eyebrow" style="white-space:nowrap">好み</span>${prefSeg(d.id)}</div></div></div>
     <div class="section"><div class="eyebrow">材料メモ(タップで買い物リストへ)</div><div class="chips">${d.ing.map(i=>`<button class="chip ing ${inShop(i)?'on':''}" onclick="toggleShop('${esc(i)}','${d.id}')">${inShop(i)?'✓ ':''}${esc(i)}</button>`).join('')}</div></div>
     ${(()=>{ const ps=sess.plus||(sess.plus=plusOne(d)); if(!ps.length) return ''; return `<div class="section"><div class="eyebrow">+1品あると(タップで材料メモに追加)</div><div class="plus">${ps.map(x=>{const on=x.ing.every(n=>S.shopping.some(sh=>sh.name===n&&sh.dish===x.id)); return `<button class="${on?'on':''}" onclick="togglePlus('${x.id}','${d.id}')"><span class="pe">${emoji(x)}</span><span class="pn">${esc(x.name)}<small>${x.form==='soup'?'汁物':'副菜'}・約${x.time}分</small></span></button>`}).join('')}</div></div>`; })()}
     ${sess.rated?'':`<div class="note row" style="justify-content:space-between"><span>決めた直後の納得は?(自己テスト用)</span><span class="row"><button class="chip" onclick="satisfy(true)">納得</button><button class="chip" onclick="satisfy(false)">いまいち</button></span></div>`}
@@ -493,11 +494,11 @@ mine_edit(){
   </div>`;
 },
 prefs(){
-  const q=prefQuery.trim(); const list=ALL().filter(d=>(d.form==='one_dish'||d.form==='main')&&(!q||d.name.includes(q))).sort((a,b)=>{const o={more:0,normal:1,less:2,hide:3}; return o[prefOf(a.id)]-o[prefOf(b.id)]||a.name.localeCompare(b.name,'ja')});
-  const counts={more:0,less:0,hide:0}; ALL().forEach(d=>{const p=prefOf(d.id); if(counts[p]!==undefined) counts[p]++});
+  const q=prefQuery.trim(); const list=ALL().filter(d=>(d.form==='one_dish'||d.form==='main')&&(!q||d.name.includes(q))).sort((a,b)=>{const o={like:0,normal:1,dislike:2,hide:3}; return o[prefOf(a.id)]-o[prefOf(b.id)]||a.name.localeCompare(b.name,'ja')});
+  const counts={like:0,dislike:0,hide:0}; ALL().forEach(d=>{const p=prefOf(d.id); if(counts[p]!==undefined) counts[p]++});
   return `<div class="screen">
-    <div class="top"><button class="back" onclick="go('settings')">戻る</button><span>よく出す ${counts.more}・たまに ${counts.less}・出さない ${counts.hide}</span></div>
-    <div><h1>好みの調整</h1><div class="sub">料理ごとに出やすさを変えられます。「出さない」は候補から消えます</div></div>
+    <div class="top"><button class="back" onclick="go('settings')">戻る</button><span>好き ${counts.like}・苦手 ${counts.dislike}・出さない ${counts.hide}</span></div>
+    <div><h1>料理の好み</h1><div class="sub">好きな料理は出やすく、苦手な料理はほとんど出なくなります。「出さない」は候補から消えます</div></div>
     <div class="field"><input type="text" id="prefSearch" value="${esc(prefQuery)}" placeholder="料理名で絞る" oninput="prefQuery=this.value;render();document.getElementById('prefSearch').focus()"></div>
     <div>${list.slice(0,60).map(d=>`<div class="prefrow"><span class="em">${d.photo?'📷':emoji(d)}</span><span class="nm">${esc(d.name)}</span>${prefSeg(d.id)}</div>`).join('')}${list.length>60?`<div class="sub" style="padding:8px 0">ほか ${list.length-60} 件。料理名で絞ってください</div>`:''}</div>
   </div>`;
@@ -517,7 +518,7 @@ history(){
   return `<div class="screen">
     <div class="top"><button class="back" onclick="go('home')">戻る</button><span></span></div>
     <h1>履歴</h1>
-    ${S.fav.length?`<div class="section"><div class="eyebrow">お気に入り</div><div class="chips">${S.fav.map(id=>`<span class="chip static">♥ ${esc(byId(id).name)}</span>`).join('')}</div></div>`:''}
+    ${(()=>{const likes=Object.keys(S.pref).filter(k=>S.pref[k]==='like'&&byId(k)); return likes.length?`<div class="section"><div class="eyebrow">好きな料理</div><div class="chips">${likes.map(id=>`<span class="chip static">♥ ${esc(byId(id).name)}</span>`).join('')}</div></div>`:''})()}
     <div class="section"><div class="eyebrow">食べた</div>${eaten.length?`<div class="list">${eaten.map(x=>`<div class="item"><span>${emoji(byId(x.id))}</span><span class="n">${esc(byId(x.id).name)}</span><span class="d">${x.date.slice(5).replace('-','/')}</span></div>`).join('')}</div>`:'<div class="sub">まだありません。「食べた」を押すと残ります(7日以内は候補から下がります)</div>'}</div>
     <div class="grow"></div>
   </div>`;
@@ -530,7 +531,7 @@ settings(){
     <div class="section"><div class="eyebrow">標準の時間</div><div class="chips">${TIMES.map(([k,l])=>`<button class="chip" aria-pressed="${S.stdTime===k}" onclick="S.stdTime='${k}';save();render()">${l}</button>`).join('')}</div></div>
     <div class="section"><div class="eyebrow">苦手・食べられない食材(候補から外す)</div><div class="chips">${Object.entries(TAGS).map(([k,l])=>`<button class="chip" aria-pressed="${S.exclude.includes(k)}" onclick="const i=S.exclude.indexOf('${k}');i>=0?S.exclude.splice(i,1):S.exclude.push('${k}');save();render()">${l}</button>`).join('')}</div>${S.exclude.includes('soy')?'<div class="note">大豆(醤油)を外すと候補が大幅に減ります</div>':''}</div>
     ${S.hidden.length?`<div class="section"><div class="eyebrow">出さない料理</div><div class="chips">${S.hidden.map(id=>`<button class="chip" onclick="S.hidden=S.hidden.filter(x=>x!=='${id}');save();render()">✕ ${esc(byId(id).name)}</button>`).join('')}</div></div>`:''}
-    <div class="section"><div class="eyebrow">料理のカスタマイズ</div><div class="stack"><button class="btn secondary" onclick="go('mine')">マイ料理を登録・編集(${S.pro?`${S.custom.length}件`:`${S.custom.length}/${MY_FREE_LIMIT}件`})</button><button class="btn secondary" onclick="prefQuery='';go('prefs')">好みの調整(出やすさ)</button></div></div>
+    <div class="section"><div class="eyebrow">料理のカスタマイズ</div><div class="stack"><button class="btn secondary" onclick="go('mine')">マイ料理を登録・編集(${S.pro?`${S.custom.length}件`:`${S.custom.length}/${MY_FREE_LIMIT}件`})</button><button class="btn secondary" onclick="prefQuery='';go('prefs')">料理の好み(好き・苦手)</button></div></div>
     <div class="section"><div class="eyebrow">レシピの検索先</div><div class="chips">${Object.entries(SITES).map(([k,v])=>`<button class="chip" aria-pressed="${S.searchSite===k}" onclick="S.searchSite='${k}';save();render()">${v[0]}</button>`).join('')}</div><div class="sub">「レシピを見る」を押すと、料理名を入れた状態でこのサイトの検索が開きます</div></div>
     <div class="section"><div class="eyebrow">Pro(デモ)</div><div class="chips"><button class="chip" aria-pressed="${S.pro}" onclick="S.pro=!S.pro;save();render()">${S.pro?'Pro オン':'無料'}</button></div><div class="sub">無料: マイ料理${MY_FREE_LIMIT}件まで。Pro: 無制限、家族モード、料理全件</div></div>
     <div class="section"><div class="eyebrow">家族モード(デモ)</div><div class="chips"><button class="chip" aria-pressed="${!!S.group}" onclick="enableDemoGroup(${!S.group})">${S.group?'オン(パパ・はるちゃんと共有中)':'オフ'}</button></div><div class="sub">本物はサーバー(Supabase)で同期します。ここでは偽のメンバーが端末内で動きます</div></div>
@@ -606,9 +607,9 @@ function onPhoto(input){
   img.src=url;
 }
 // ===== 出やすさ(手動の重み)と 自分のレシピメモ =====
-function setPref(id,v){ if(v==='hide'){ if(!S.hidden.includes(id)) S.hidden.push(id); delete S.pref[id]; } else { S.hidden=S.hidden.filter(x=>x!==id); if(v==='normal') delete S.pref[id]; else S.pref[id]=v; } save(); render(); }
+function setPref(id,v){ if(v==='hide'){ if(!S.hidden.includes(id)) S.hidden.push(id); delete S.pref[id]; } else { S.hidden=S.hidden.filter(x=>x!==id); if(v==='normal') delete S.pref[id]; else S.pref[id]=v; } save(); toast({like:'好きな料理にしました。出やすくなります',dislike:'苦手にしました。ほとんど出なくなります',hide:'候補から外しました',normal:'ふつうに戻しました'}[v]); render(); }
 function prefOf(id){ return S.hidden.includes(id)?'hide':(S.pref[id]||'normal'); }
-function prefSeg(id){ const cur=prefOf(id); return `<span class="seg">${[['more','よく出す'],['normal','ふつう'],['less','たまに'],['hide','出さない']].map(([k,l])=>`<button class="${k==='hide'?'hide':''}" aria-pressed="${cur===k}" onclick="setPref('${id}','${k}')">${l}</button>`).join('')}</span>`; }
+function prefSeg(id){ const cur=prefOf(id); return `<span class="seg">${[['like','♥ 好き'],['normal','ふつう'],['dislike','苦手'],['hide','出さない']].map(([k,l])=>`<button class="${k==='hide'?'hide':k==='like'?'like':''}" aria-pressed="${cur===k}" onclick="setPref('${id}','${k}')">${l}</button>`).join('')}</span>`; }
 function saveRecipe(id){ const memo=document.getElementById('rMemo').value.trim(), url=document.getElementById('rUrl').value.trim(); if(memo||url) S.recipes[id]={memo,url}; else delete S.recipes[id]; save(); toast('レシピメモを保存しました'); sess.editRecipe=false; render(); }
 let prefQuery='';
 function reroll(i){ const w=sess.week; const used=w.days.map(x=>x.id); const dt=new Date(w.days[i].date); const wd=dt.getDay(); const timeKey=(wd===0||wd===6)?'any':S.stdTime;
