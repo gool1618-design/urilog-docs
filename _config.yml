@@ -20,3 +20,7 @@ title: バイヤーノート
 description: 古着の相場検索と在庫・売上管理アプリ
 theme: jekyll-theme-minimal
 lang: ja
+
+# 企画書などの内部文書は Pages で公開しない(リポジトリ上では読める)。
+exclude:
+  - planning
