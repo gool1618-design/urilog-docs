@@ -1,4 +1,5 @@
 ---
+layout: stadium
 title: サポート — STADIUM
 ---
 

@@ -1,4 +1,5 @@
 ---
+layout: stadium
 title: 利用規約 — STADIUM
 ---
 
