@@ -1,4 +1,5 @@
 ---
+layout: vinfit
 title: プライバシーポリシー — VINFIT
 ---
 

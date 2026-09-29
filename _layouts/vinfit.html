@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{% comment %}
+VINFIT の公開文書だけに使う枠(2026-09-30)。
+サイト共通の枠(jekyll-theme-minimal)は見出しに「バイヤーノート / 古着の相場検索…」を出す。
+VINFIT は別のアプリで、バイヤーノートとの併用を前提にしていない。審査担当・利用者が
+別のアプリの文書だと取り違えないよう、アプリ名だけを出す(STADIUM と同じ対処)。
+きっかけ: VINFIT 1.0 が Guideline 5.1.1(i) / 5.1.2(i)(プライバシー)で差し戻され、
+審査担当がこのページを開く可能性が高かった。
+{% endcomment %}
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }}</title>
+  <meta name="description" content="VINFIT の{{ page.title | split: ' — ' | first }}">
+  <style>
+    body { margin: 0; background: #F2E8D2; color: #1C1814; font-family: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; line-height: 1.8; }
+    header { background: #1C1814; color: #F2E8D2; padding: 16px 20px; }
+    header p { margin: 0; font-weight: 800; letter-spacing: .12em; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 20px 48px; }
+    h1 { font-size: 1.6em; line-height: 1.4; }
+    h2 { font-size: 1.2em; margin-top: 2em; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #B9AB8C; padding: 6px 10px; text-align: left; }
+    a { color: #A3241B; }
+    hr { border: none; border-top: 1px solid #B9AB8C; margin: 2em 0; }
+  </style>
+</head>
+<body>
+  <header><p>VINFIT</p></header>
+  <main>
+{{ content }}
+  </main>
+</body>
+</html>
