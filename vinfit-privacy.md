@@ -146,7 +146,7 @@ OpenAI における取り扱いは同社のポリシーに従います。
 
 本ポリシーおよび情報の取り扱いに関するお問い合わせは、以下までご連絡ください。
 
-- 連絡先: urilog.support@gmail.com
+- 連絡先: vinfit.support@borowear.com
 
 ---
 
