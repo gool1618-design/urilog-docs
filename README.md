@@ -16,3 +16,14 @@ GitHub Pages で公開しています。
 文面を変更するときは、アプリの実装と食い違わないか確認してください。
 同意画面・設定画面に書かれている「何を送信するか」の説明と、
 プライバシーポリシーの記述は一致している必要があります。
+
+## planning/
+
+新しいアプリの企画・仕様メモを置く場所。`_config.yml` の `exclude` で Pages のビルド対象から外している。
+公開URLには出ないが、リポジトリは公開なので、非公開にしたい内容(収益の実数など)は書かない。アプリ本体のソースは別の非公開リポジトリに置く。
+
+- [ピクモグ 企画・仕様 第3版](planning/meal-decision-app-spec.md)
+- [ピクモグ 料理データ リスト設計(150件)](planning/meal-decision-dish-list.md)(元表: `planning/meal-decision-dishes.csv`、検証: `planning/check_dish_coverage.py`、生成: `planning/generate_dish_list.py`)
+- [ピクモグ プロトタイプ仕様](planning/meal-decision-prototype-spec.md)
+- [ピクモグ Supabase テーブル設計](planning/meal-decision-supabase-schema.md)
+- [ピクモグ 実装計画 v1.0](planning/meal-decision-build-plan.md)
