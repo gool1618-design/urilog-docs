@@ -5,6 +5,8 @@ published: false
 
 # STADIUM プロキシ設計
 
+> **2026-10-07 注記**: この Cloudflare Workers 案は不採用になった。実際のデータ源は API-Football v3(Pro)で、アプリは Supabase の Edge Function `football` を経由して取得する(2026-09-26 決定、`Stadium/docs/API_FOOTBALL_MIGRATION.md`)。ここに書いた「キーをアプリに置かない」「上流の障害時は最後のデータを返す」「順位表は結果から自前計算」の考え方は引き継がれている。
+
 作成日: 2026年9月20日
 前提: データ源は TheSportsDB Premium(v1 API、キーは URL に含める)。プロキシは Cloudflare Workers + KV を想定。アプリはプロキシだけを見る。
 

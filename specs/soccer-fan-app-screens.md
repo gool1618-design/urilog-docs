@@ -5,6 +5,8 @@ published: false
 
 # STADIUM 画面仕様
 
+> **2026-10-07 注記**: 画面の正は `Stadium/Views/Home/HomeView.swift` の見た目(9/21 採用の Codex 版)で、DEV_RULES 1 により仕様書より優先する。本文は企画時の記述。
+
 作成日: 2026年9月20日
 改訂: 2026年9月21日(Codex が作り直したホームを正とする決定を反映。下の「デザインの正」を参照)
 前提: `soccer-fan-app.md` の決定事項に基づく。初期リリース(v1.0)の範囲を書く。Pro 機能は境界だけ示す。
