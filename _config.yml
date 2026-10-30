@@ -20,3 +20,13 @@ title: バイヤーノート
 description: 古着の相場検索と在庫・売上管理アプリ
 theme: jekyll-theme-minimal
 lang: ja
+
+# サイト全体のURL。sitemap.xml の絶対URLに使われる。
+url: https://gool1618-design.github.io
+baseurl: /urilog-docs
+
+# sitemap.xml を自動生成する(検索エンジンに相場ページを見つけてもらうため)。
+# GitHub Pages が公式に対応しているプラグインだけを入れている。
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
