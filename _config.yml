@@ -30,3 +30,8 @@ baseurl: /urilog-docs
 plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
+
+# planning/ は企画メモ置き場。Pages では公開しない(リポジトリ自体は公開のため閲覧は可能)。
+exclude:
+  - planning
+  - README.md
